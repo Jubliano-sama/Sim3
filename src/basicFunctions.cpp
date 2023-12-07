@@ -26,10 +26,13 @@ void setup(){
     pinMode(startSwitch, INPUT);
 }
 
-void readIRSensors(){
+int *readIRSensors(){
+    static int IRValues[aantalIRSensors];
     for(int i=0;i<aantalIRSensors;i++){
-        int IRValues[i]=digitalRead(IRSensors[i]);
+        IRValues[i]=digitalRead(IRSensors[i]);
     }
+
+    return IRValues;
 }
 
 
