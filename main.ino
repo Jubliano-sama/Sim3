@@ -1,10 +1,14 @@
 #include <Arduino.h>
 
+const double Kp = 0.05;
+const double Ki = 0;
+const double Kd = 0;
+
 void setup(){}
 
 void loop(){}
 
-float pidControl(float setpoint, float input, float Kp, float Ki, float Kd) {
+double pidControl(double setpoint, double input, double Kp, double Ki, double Kd) {
   // Store the old time
   static unsigned long prevTime = 0;
 
@@ -19,28 +23,28 @@ float pidControl(float setpoint, float input, float Kp, float Ki, float Kd) {
     return
     }
   // Calculate error
-  float error = setpoint - input;
+  double error = setpoint - input;
 
   // Calculate proportional term
-  float proportional = error * Kp;
+  double proportional = error * Kp;
 
   // Calculate integral term
-  static float integral = 0.0;
+  static double integral = 0.0;
   integral += error * dt;
-  float integralTerm = Ki * integral;
+  double integralTerm = Ki * integral;
 
   // Calculate derivative term
-  float derivative = (error - lastError) / dt;
-  float derivativeTerm = Kd * derivative;
+  double derivative = (error - lastError) / dt;
+  double derivativeTerm = Kd * derivative;
 
   // Calculate PID output
-  float pidOutput = proportional + integralTerm + derivativeTerm;
+  double pidOutput = proportional + integralTerm + derivativeTerm;
 
   // Update last error for derivative calculation
   lastError = error;
 
   // Return PID output
-  return pidOutput;
+  return pidOutput; 
 }
 
 int calculateWeightedArraySum(const int array[]) {
@@ -62,4 +66,17 @@ int calculateWeightedArraySum(const int array[]) {
   }
 
   return value; // Return calculated value
+}
+float *calculateMotorInput(double pidOutput){
+    static double[2] motorInputs = {0,0};
+    pidOutput += 0.5;
+    pidOutput = constrain(pidOutput,0,1); //pidOutput = 1 ==> full left pidOutput = o ==> full right  
+if (pidOutput > 0.5){
+    motorInputs[0] = 1;     // motorInput[0] = L
+    motorInputs[1] = 1/pidOutput -1;    // motorInput[1] = R
+else 
+    motorInputs[0] = 1/pidOutput -1;
+    motorInputs[1] = 1;
+}
+    return motorInputs;
 }
