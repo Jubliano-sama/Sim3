@@ -4,14 +4,16 @@ const double Kp = 0.05;
 const double Ki = 0;
 const double Kd = 0;
 
-void setup(){}
+void setup () {
+}
 
-void loop(){}
+void loop() {
+}
 
 double pidControl(double setpoint, double input, double Kp, double Ki, double Kd) {
   // Store the old time
   static unsigned long prevTime = 0;
-
+  static double lastError = 0;
   // Calculate the current time
   unsigned long currentTime = millis();
 
@@ -20,8 +22,8 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
   prevTime = currentTime;
 
   if (dt == 0){
-    return
-    }
+    return 0;
+  }
   // Calculate error
   double error = setpoint - input;
 
@@ -44,12 +46,12 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
   lastError = error;
 
   // Return PID output
-  return pidOutput; 
+  return pidOutput; 
 }
 
 int calculateWeightedArraySum(const int array[]) {
   int length = sizeof(array) / sizeof(array[0]); // Determine array length
-
+  
   if (length % 2 == 0) { // Check if array length is even
     return -1; // Return error if even length
   }
@@ -67,16 +69,17 @@ int calculateWeightedArraySum(const int array[]) {
 
   return value; // Return calculated value
 }
-float *calculateMotorInput(double pidOutput){
-    static double[2] motorInputs = {0,0};
+double *calculateMotorInput(double pidOutput){
+    static double motorInputs[] = {0,0};
     pidOutput += 0.5;
     pidOutput = constrain(pidOutput,0,1); //pidOutput = 1 ==> full left pidOutput = o ==> full right  
-if (pidOutput > 0.5){
-    motorInputs[0] = 1;     // motorInput[0] = L
-    motorInputs[1] = 1/pidOutput -1;    // motorInput[1] = R
-else 
-    motorInputs[0] = 1/pidOutput -1;
-    motorInputs[1] = 1;
-}
+    if (pidOutput > 0.5){
+        motorInputs[0] = 1;     // motorInput[0] = L
+        motorInputs[1] = 1/pidOutput -1;    // motorInput[1] = R
+    }
+    else {
+        motorInputs[0] = 1/pidOutput -1;
+        motorInputs[1] = 1;
+    }
     return motorInputs;
 }
