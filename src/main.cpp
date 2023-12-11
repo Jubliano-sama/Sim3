@@ -99,8 +99,8 @@ bool isAllOne(bool* arr, int arrSize) {
     return true;
 }
 
-bool checkStopSign(bool sensorArr[], bool frontSensor){
-  if (!frontSensor){
+bool checkStopSign(){
+  if (!readFrontIRSensor()){
     return false;
   }
   
@@ -111,8 +111,8 @@ bool checkStopSign(bool sensorArr[], bool frontSensor){
   return true;
 }
 
-bool checkPauseSign(bool sensorArr[], bool frontSensor){
-  if (!frontSensor){
+bool checkPauseSign(){
+  if (!readFrontIRSensor()){
     return false;
   }
   
@@ -121,6 +121,25 @@ bool checkPauseSign(bool sensorArr[], bool frontSensor){
   }
 
   return true;
+}
+
+bool checkOvershoot(){
+  if(!isAllZero(getSensorValues(), IRSensorsCount)){
+    return false;
+  }
+  if(readFrontIRSensor()){
+    return false;
+  }
+
+  return true;
+}
+
+void handleOvershoot(){
+  while(isAllOne(getSensorValues(), IRSensorsCount)){
+    // turn in last direction we went in until overshoot is resolved
+    double directionParsed = map((double)lastDirection, 0, 1, -1, 1);
+    driveMotors(directionParsed, -directionParsed);
+  }
 }
 
 void handlePauseSign(){
@@ -142,18 +161,18 @@ void loop() {
   if(digitalRead(switchPin)){
     bool frontSensor = readFrontIRSensor();
     bool * sensorValues = getSensorValues();
-    if (checkPauseSign(sensorValues, frontSensor)){
+    if (checkPauseSign()){
       #ifdef DEBUG
         Serial.print("\nPause sign detected");
       #endif
       handlePauseSign();
-    }
-
-    if (checkStopSign(sensorValues, frontSensor)) {
+    } else if (checkStopSign()) {
       #ifdef DEBUG
       Serial.print("\nStop sign detected");
       #endif
       driveMotors(0,0);
+    } else if (checkOvershoot()){
+
     } else {
       double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
       double* motorInput;

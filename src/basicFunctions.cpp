@@ -5,6 +5,9 @@ double calibratieFactors[]={1,1,1,1}; //calibratiefactoren tussen 0 en 1
 
 bool sensorArr[IRSensorsCount];
 
+// 0=left, 1=right
+bool lastDirection = 0;
+
 //Setup
 void setupBasicFunctions(){
     //IR sensoren
@@ -20,6 +23,9 @@ bool readFrontIRSensor(){
     bool frontIRValue=digitalRead(frontIRSensorPin);
     frontIRValue= !frontIRValue;
 
+    #ifdef DEBUG
+    Serial.print("\nFront sensor: "); Serial.print(frontIRValue);
+    #endif
     return frontIRValue;
 }
 
@@ -32,6 +38,11 @@ void updateIRSensors(){
 
 bool * getSensorValues(){
     updateIRSensors();
+    #ifdef DEBUG
+    Serial.print("\nSensorarr: ");
+    for (bool element : sensorArr) // for each element in the array
+        Serial.print(element); // print the current element
+    #endif
     return &sensorArr[0];
 }
 
@@ -41,6 +52,12 @@ int  convertToPWM(double input){
 
 void driveMotors(double left, double right){
     double motorSignals[2] = {left, right};
+
+    if (left > right){
+        lastDirection = 1;
+    } else {
+        lastDirection = 0;
+    }
 
     // LET OP: BUG IN DEZE CODE ZEER WAARSCHIJNLIJK, CHECK DE PINS!!
     digitalWrite(motorsFowardPins[0],(bool)ceil(left));

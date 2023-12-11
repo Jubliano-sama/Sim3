@@ -14,6 +14,8 @@ const int motorsFowardPins[]={51,49,47,45};
 const int motorsBackwardPins[]={50,48,46,44};
 const int motorsENAPins[]={2,3,4,5};
 
+extern bool lastDirection;
+
 void setupBasicFunctions();
 bool readFrontIRSensor();
 void driveMotors(double left, double right);
