@@ -32,7 +32,7 @@ void updateIRSensors(){
 
 bool * getSensorValues(){
     updateIRSensors();
-    return sensorArr;
+    return &sensorArr[0];
 }
 
 int  convertToPWM(double input){
@@ -49,6 +49,10 @@ void driveMotors(double left, double right){
     digitalWrite(motorsBackwardPins[3],!motorsFowardPins[1]);
 
     for (int i=0;i<4; i++){
-        analogWrite(motorsENAPins[i],convertToPWM(calibratieFactors[i] * abs(motorSignals[i])));
+        int pwmValue = convertToPWM(calibratieFactors[i] * abs(motorSignals[i]));
+        analogWrite(motorsENAPins[i], pwmValue);
+        #ifdef DEBUG
+            Serial.print("\nWriting motor, value:"); Serial.print(i); Serial.print(pwmValue);
+        #endif
     }
 }

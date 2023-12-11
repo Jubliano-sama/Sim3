@@ -1,4 +1,3 @@
-#define DEBUG 1
 #include <Arduino.h>
 #include "basicFunctions.h"
 

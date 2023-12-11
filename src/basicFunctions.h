@@ -1,5 +1,5 @@
 #pragma once
-
+#define DEBUG 1
 const double Kp = 0.05;
 const double Ki = 0;
 const double Kd = 0;
