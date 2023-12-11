@@ -1,13 +1,35 @@
 #include <Arduino.h>
+#include "basicFunctions.h"
 
 const double Kp = 0.05;
 const double Ki = 0;
 const double Kd = 0;
 
+const int switchPin = 53;
+
 void setup () {
+  pinMode(switchPin, INPUT);
 }
 
-void loop() {
+void loop() { 
+  if(digitalRead(switchPin)){
+    bool sensorArr[] = readIRSensors();
+    bool frontSensor = readFrontIRSensor();
+    if (checkPauseSign(sensorArr, frontSensor)){
+      handlePauseSign();
+    }
+
+    if checkStopSign {
+      driveMotors(0,0,0,0);
+    } else {
+      double pid = pidControl(0, calculateWeightedArraySum(sensorArr), Kp, Ki, Kd);
+      double motorInput[] = calculateMotorInput(pid);
+      driveMotors(motorInput[0], motorInput[1], motorInput[0], motorInput[1])
+    }
+
+  } else {
+    delay(500);
+  }
 }
 
 double pidControl(double setpoint, double input, double Kp, double Ki, double Kd) {
@@ -83,3 +105,61 @@ double *calculateMotorInput(double pidOutput){
     }
     return motorInputs;
 }
+
+void handlePauseSign(){
+  delay(5000)
+
+  while (isAllZero(readIRSensors())){
+    if(digitalRead(switchPin)){
+      // move forward
+      driveMotors(1,1,1,1);
+    } else{
+      // stop movement
+      driveMotors(0,0,0,0);
+      delay(500)
+    }
+  }
+
+}
+bool checkStopSign(bool sensorArr{},bool frontSensor){
+  if (!frontSensor){
+    return false;
+  }
+  
+  if !isAllOne(sensorArr){
+    return false;
+  }
+
+  return true;
+}
+
+bool checkPauseSign(bool sensorArr[], bool frontSensor){
+  if (!frontSensor){
+    return false;
+  }
+  
+  if !isAllZero(sensorArr){
+    return false;
+  }
+
+  return true;
+}
+
+bool isAllZero(int arr[]) {
+    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
+        if (arr[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isAllOne(int arr[]) {
+    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
+        if (arr[i] != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
