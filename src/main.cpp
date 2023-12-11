@@ -11,26 +11,6 @@ void setup () {
   pinMode(switchPin, INPUT);
 }
 
-void loop() { 
-  if(digitalRead(switchPin)){
-    bool sensorArr[] = readIRSensors();
-    bool frontSensor = readFrontIRSensor();
-    if (checkPauseSign(sensorArr, frontSensor)){
-      handlePauseSign();
-    }
-
-    if checkStopSign {
-      driveMotors(0,0,0,0);
-    } else {
-      double pid = pidControl(0, calculateWeightedArraySum(sensorArr), Kp, Ki, Kd);
-      double motorInput[] = calculateMotorInput(pid);
-      driveMotors(motorInput[0], motorInput[1], motorInput[0], motorInput[1])
-    }
-
-  } else {
-    delay(500);
-  }
-}
 
 double pidControl(double setpoint, double input, double Kp, double Ki, double Kd) {
   // Store the old time
@@ -71,7 +51,7 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
   return pidOutput; 
 }
 
-int calculateWeightedArraySum(const int array[]) {
+int calculateWeightedArraySum(const bool array[]) {
   int length = sizeof(array) / sizeof(array[0]); // Determine array length
   
   if (length % 2 == 0) { // Check if array length is even
@@ -106,27 +86,30 @@ double *calculateMotorInput(double pidOutput){
     return motorInputs;
 }
 
-void handlePauseSign(){
-  delay(5000)
-
-  while (isAllZero(readIRSensors())){
-    if(digitalRead(switchPin)){
-      // move forward
-      driveMotors(1,1,1,1);
-    } else{
-      // stop movement
-      driveMotors(0,0,0,0);
-      delay(500)
+bool isAllZero(bool arr[]) {
+    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
+        if (arr[i] != 0) {
+            return false;
+        }
     }
-  }
-
+    return true;
 }
-bool checkStopSign(bool sensorArr{},bool frontSensor){
+
+bool isAllOne(bool arr[]) {
+    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
+        if (arr[i] != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool checkStopSign(bool sensorArr[], bool frontSensor){
   if (!frontSensor){
     return false;
   }
   
-  if !isAllOne(sensorArr){
+  if (!isAllOne(sensorArr)){
     return false;
   }
 
@@ -138,28 +121,47 @@ bool checkPauseSign(bool sensorArr[], bool frontSensor){
     return false;
   }
   
-  if !isAllZero(sensorArr){
+  if (!isAllZero(sensorArr)){
     return false;
   }
 
   return true;
 }
 
-bool isAllZero(int arr[]) {
-    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
-        if (arr[i] != 0) {
-            return false;
-        }
+void handlePauseSign(){
+  delay(5000);
+
+  while (isAllZero(readIRSensors())){
+    if(digitalRead(switchPin)){
+      // move forward
+      driveMotors(1,1,1,1);
+    } else{
+      // stop movement
+      driveMotors(0,0,0,0);
+      delay(500);
     }
-    return true;
+  }
 }
 
-bool isAllOne(int arr[]) {
-    for (int i = 0; i < sizeof(arr) / sizeof(arr[0]); i++) {
-        if (arr[i] != 1) {
-            return false;
-        }
+void loop() { 
+  if(digitalRead(switchPin)){
+    bool* sensorArr;
+    sensorArr = readIRSensors();
+    bool frontSensor = readFrontIRSensor();
+    if (checkPauseSign(sensorArr, frontSensor)){
+      handlePauseSign();
     }
-    return true;
-}
 
+    if (checkStopSign(sensorArr, frontSensor)) {
+      driveMotors(0,0,0,0);
+    } else {
+      double pid = pidControl(0, calculateWeightedArraySum(sensorArr), Kp, Ki, Kd);
+      double* motorInput;
+      motorInput = calculateMotorInput(pid);
+      driveMotors(motorInput[0], motorInput[1], motorInput[0], motorInput[1]);
+    }
+
+  } else {
+    delay(500);
+  }
+}
