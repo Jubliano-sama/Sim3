@@ -1,5 +1,8 @@
+#define DEBUG 1
+
 #include <Arduino.h>
 #include "basicFunctions.h"
+#include <string.h>
 
 const double Kp = 0.05;
 const double Ki = 0;
@@ -9,6 +12,7 @@ const int switchPin = 53;
 
 void setup () {
   pinMode(switchPin, INPUT);
+  Serial.begin(9600);
 }
 
 
@@ -149,16 +153,26 @@ void loop() {
     sensorArr = readIRSensors();
     bool frontSensor = readFrontIRSensor();
     if (checkPauseSign(sensorArr, frontSensor)){
+      #ifndef DEBUG
+        Serial.print("Pause sign detected");
+      #endif
       handlePauseSign();
     }
 
     if (checkStopSign(sensorArr, frontSensor)) {
       driveMotors(0,0,0,0);
+      #ifndef DEBUG
+      Serial.print("Stop sign detected");
+      #endif
     } else {
       double pid = pidControl(0, calculateWeightedArraySum(sensorArr), Kp, Ki, Kd);
       double* motorInput;
       motorInput = calculateMotorInput(pid);
       driveMotors(motorInput[0], motorInput[1], motorInput[0], motorInput[1]);
+      #ifndef DEBUG 
+      Serial.printf("PID output: ", pid);
+      Serial.printf("Motor input: ", "%s\n", motorInput);
+      #endif
     }
 
   } else {
