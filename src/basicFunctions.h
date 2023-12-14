@@ -12,6 +12,7 @@ const int frontIRSensorPin=52;
 const int motorsFowardPins[]={51,49,47,45};
 const int motorsBackwardPins[]={50,48,46,44};
 const int motorsENAPins[]={2,3,4,5};
+const int stopPauseDelay = 500;
 
 extern bool lastDirection;
 

@@ -113,36 +113,46 @@ bool isAllOne(bool *arr, int arrSize)
   return true;
 }
 
-bool checkStopSign()
-{
-  if (!readFrontIRSensor())
-  {
-    return false;
-  }
+void handlePauseSign(){
+  delay(5000);
 
+  while (isAllZero(getSensorValues(), IRSensorsCount) || isAllOne(getSensorValues(), IRSensorsCount)){
+    if(digitalRead(switchPin)){
+      // move forward
+      driveMotors(1,1);
+    } else{
+      // stop movement
+      driveMotors(0,0);
+      delay(5000);
+    }
+  }
+}
+
+void handlePossibleStopPauseSign()
+{
   if (!isAllOne(getSensorValues(), IRSensorsCount))
   {
-    return false;
+    return;
+  }
+  int beginTime = millis();
+
+  while((millis() - beginTime) < stopPauseDelay){
+    driveMotors(0.2,0.2);
+    if (isAllZero(getSensorValues(), IRSensorsCount)){
+      handlePauseSign();
+#ifdef DEBUG
+Serial.print("\nPause sign detected");
+#endif
+      return;
+    }
   }
 
-  return true;
+  // detected stop sign
+#ifdef DEBUG
+  Serial.print("\nStop sign detected");
+#endif
+  while(digitalRead(switchPin) == HIGH);
 }
-
-bool checkPauseSign()
-{
-  if (!readFrontIRSensor())
-  {
-    return false;
-  }
-
-  if (!isAllZero(getSensorValues(), IRSensorsCount))
-  {
-    return false;
-  }
-
-  return true;
-}
-
 bool checkOvershoot()
 {
   if (!isAllZero(getSensorValues(), IRSensorsCount))
@@ -177,48 +187,16 @@ void handleOvershoot()
   }
 }
 
-void handlePauseSign()
-{
-  delay(5000);
-
-  while (isAllZero(getSensorValues(), IRSensorsCount))
-  {
-    if (digitalRead(switchPin))
-    {
-      // move forward
-      driveMotors(1, 1);
-    }
-    else
-    {
-      // stop movement
-      driveMotors(0, 0);
-      delay(500);
-    }
-  }
-}
-
 void loop()
 {
   if (digitalRead(switchPin))
   {
     bool frontSensor = readFrontIRSensor();
     bool *sensorValues = getSensorValues();
-    if (checkPauseSign())
+    handlePossibleStopPauseSign();
+    if (checkOvershoot())
     {
-#ifdef DEBUG
-      Serial.print("\nPause sign detected");
-#endif
-      handlePauseSign();
-    }
-    else if (checkStopSign())
-    {
-#ifdef DEBUG
-      Serial.print("\nStop sign detected");
-#endif
-      driveMotors(0, 0);
-    }
-    else if (checkOvershoot())
-    {
+      handleOvershoot();
     }
     else
     {
