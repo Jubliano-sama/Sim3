@@ -71,11 +71,14 @@ void driveMotors(double left, double right)
         lastDirection = 0;
     }
 
-    // LET OP: BUG IN DEZE CODE ZEER WAARSCHIJNLIJK, CHECK DE PINS!!
     digitalWrite(motorsFowardPins[0], (bool)ceil(left));
-    digitalWrite(motorsFowardPins[1], (bool)ceil(right));
-    digitalWrite(motorsBackwardPins[2], !motorsFowardPins[0]);
-    digitalWrite(motorsBackwardPins[3], !motorsFowardPins[1]);
+    digitalWrite(motorsFowardPins[1], (bool)ceil(left));
+    digitalWrite(motorsFowardPins[2], (bool)ceil(right));
+    digitalWrite(motorsFowardPins[3], (bool)ceil(right));
+    digitalWrite(motorsBackwardPins[0], !motorsFowardPins[0]);
+    digitalWrite(motorsBackwardPins[1], !motorsFowardPins[1]);
+    digitalWrite(motorsBackwardPins[2], !motorsFowardPins[2]);
+    digitalWrite(motorsBackwardPins[3], !motorsFowardPins[3]);
 
     for (int i = 0; i < 4; i++)
     {
