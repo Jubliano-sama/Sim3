@@ -78,13 +78,13 @@ double *calculateMotorInput(double pidOutput)
   pidOutput = constrain(pidOutput, 1e-6, 1); // pidOutput = 1 ==> full left pidOutput = o ==> full right
   if (pidOutput > 0.5)
   {
-    motorInputs[0] = 1;                                   // motorInput[0] = L
-    motorInputs[1] = map(1 / pidOutput - 1, 0, 1, -1, 1); // motorInput[1] = R
+    motorInputs[1] = 1;                                   // motorInput[0] = L
+    motorInputs[0] = map(1 / pidOutput - 1, 0, 1, -1, 1); // motorInput[1] = R
   }
   else
   {
-    motorInputs[0] = map(1 / pidOutput - 1, 0, 1, -1, 1);
-    motorInputs[1] = 1;
+    motorInputs[1] = map(1 / pidOutput - 1, 0, 1, -1, 1);
+    motorInputs[0] = 1;
   }
   return motorInputs;
 }
