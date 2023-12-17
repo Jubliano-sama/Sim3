@@ -74,16 +74,15 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 double *calculateMotorInput(double pidOutput)
 {
   static double motorInputs[] = {0, 0};
-  pidOutput += 0.5;
-  pidOutput = constrain(pidOutput, 1e-6, 1); // pidOutput = 1 ==> full left pidOutput = o ==> full right
-  if (pidOutput > 0.5)
+  pidOutput = constrain(pidOutput, -0.5, 0.5); // pidOutput = 0.5 ==> turn left pidOutput = -0.5 ==> turn right
+  if (pidOutput > 0)
   {
-    motorInputs[1] = 1;                                   // motorInput[0] = L
-    motorInputs[0] = map(1 / pidOutput - 1, 0, 1, -1, 1); // motorInput[1] = R
+    motorInputs[1] = 1;                                   // motorInput[0] = L // motorInput[1] = R
+    motorInputs[0] = -8*pidOutput*pidOutput +1;           
   }
   else
   {
-    motorInputs[1] = map(1 / pidOutput - 1, 0, 1, -1, 1);
+    motorInputs[1] = -8*pidOutput*pidOutput + 1;
     motorInputs[0] = 1;
   }
   return motorInputs;
