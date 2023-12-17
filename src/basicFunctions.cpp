@@ -19,6 +19,8 @@ void setupBasicFunctions()
 
     // StartSwitch
     pinMode(switchPin, INPUT);
+    
+    Serial.begin(115200);
 }
 
 bool readFrontIRSensor()
@@ -85,7 +87,6 @@ void driveMotors(double left, double right)
         Serial.print(", backward pin: ");
         Serial.print(motorsBackwardPins[motorIndex]);
 #endif
-
     }
 
     for (int i = 0; i < 4; i++)
@@ -93,9 +94,11 @@ void driveMotors(double left, double right)
         int pwmValue = convertToPWM(calibratieFactors[i] * abs(motorSignals[i]));
         analogWrite(motorsENAPins[i], pwmValue);
 #ifdef DEBUG
-        Serial.print("\nWriting motor, value:");
+        Serial.print("\nSetting motor: ");
         Serial.print(i);
-        Serial.print(pwmValue);
+        Serial.print(", to: ");
+        Serial.print((float)pwmValue / 255 * 100);
+        Serial.print("%");
 #endif
     }
 }
