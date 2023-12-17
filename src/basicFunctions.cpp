@@ -19,7 +19,7 @@ void setupBasicFunctions()
 
     // StartSwitch
     pinMode(switchPin, INPUT);
-    
+
     Serial.begin(115200);
 }
 
@@ -76,8 +76,9 @@ void driveMotors(double left, double right)
     // Set motor direction pins
     for (int motorIndex = 0; motorIndex < 4; motorIndex++)
     {
-        digitalWrite(motorsFowardPins[motorIndex], (bool)ceil(motorSignals[motorIndex]));
-        digitalWrite(motorsBackwardPins[motorIndex], !motorsFowardPins[motorIndex]);
+        bool forwardState = (bool)ceil(motorSignals[motorIndex]);
+        digitalWrite(motorsFowardPins[motorIndex], forwardState);
+        digitalWrite(motorsBackwardPins[motorIndex], !forwardState);
 
 #ifdef DEBUG
         Serial.print("\nMotor ");
