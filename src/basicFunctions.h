@@ -1,6 +1,6 @@
 #pragma once
 #define DEBUG 1
-const double Kp = 0.04;
+const double Kp = 0.06;
 const double Ki = 0;
 const double Kd = 0;
 
