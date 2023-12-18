@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
 
-double calibratieFactors[] = {0.4, 0.4, 0.4, 0.4}; // calibratiefactoren tussen 0 en 1
+double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
 
 bool sensorArr[IRSensorsCount];
 
@@ -77,16 +77,16 @@ void driveMotors(double left, double right)
     for (int motorIndex = 0; motorIndex < 4; motorIndex++)
     {
         bool forwardState = (bool)ceil(motorSignals[motorIndex]);
-        digitalWrite(motorsFowardPins[motorIndex], forwardState);
+        digitalWrite(motorsForwardPins[motorIndex], forwardState);
         digitalWrite(motorsBackwardPins[motorIndex], !forwardState);
 
 #ifdef DEBUG
         Serial.print("\nMotor ");
         Serial.print(motorIndex);
         Serial.print(" forward pin: ");
-        Serial.print(motorsFowardPins[motorIndex]);
+        Serial.print(forwardState);
         Serial.print(", backward pin: ");
-        Serial.print(motorsBackwardPins[motorIndex]);
+        Serial.print(!forwardState);
 #endif
     }
 
