@@ -33,7 +33,7 @@ void loop()
       double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
       double *motorInput;
       motorInput = calculateMotorInput(pid);
-#ifdef DEBUG
+#if DEBUG >= 2
       Serial.print("\nPID output:");
       Serial.print(pid);
       Serial.print("\nMotor input: ");
@@ -137,7 +137,7 @@ void handlePossibleStopPauseSign()
     return;
   }
 
-#ifdef DEBUG
+#if DEBUG >= 1
     Serial.print("\nStop or pause sign detected: investigating...");
 #endif  
 
@@ -147,7 +147,7 @@ void handlePossibleStopPauseSign()
   while((millis() - beginTime) < stopPauseDelay){
     driveMotors(0.2,0.2);
     if (isAllZero(getSensorValues(), IRSensorsCount)){
-#ifdef DEBUG
+#if DEBUG >= 1
       Serial.print("\nPause sign detected!");
 #endif  
       handlePauseSign();
@@ -156,7 +156,7 @@ void handlePossibleStopPauseSign()
   }
 
   // detected stop sign
-#ifdef DEBUG
+#if DEBUG >= 1
   Serial.print("\nStop sign detected!");
 #endif
   while(digitalRead(switchPin) == HIGH);
@@ -196,6 +196,9 @@ bool checkOvershoot()
 
 void handleOvershoot()
 {
+#if DEBUG >= 1
+  Serial.print("/nDetected overshoot, handling it...");
+#endif
   unsigned long startTime = millis();
   const unsigned long timeout = 5000; // 5 seconds timeout
 
@@ -204,7 +207,9 @@ void handleOvershoot()
     // Check for timeout to prevent infinite loop
     if (millis() - startTime > timeout)
     {
+#if DEBUG >= 1
       Serial.println("Overshoot handling timeout");
+#endif
       break; // Exit the loop if timeout is reached
     }
 

@@ -28,7 +28,7 @@ bool readFrontIRSensor()
     bool frontIRValue = digitalRead(frontIRSensorPin);
     frontIRValue = !frontIRValue;
 
-#ifdef DEBUG
+#if DEBUG >= 2
     Serial.print("\nFront sensor: ");
     Serial.print(frontIRValue);
 #endif
@@ -47,7 +47,7 @@ void updateIRSensors()
 bool *getSensorValues()
 {
     updateIRSensors();
-#ifdef DEBUG
+#if DEBUG >= 2
     Serial.print("\nSensorarr: ");
     for (bool element : sensorArr) // for each element in the array
         Serial.print(element);     // print the current element
@@ -80,7 +80,7 @@ void driveMotors(double left, double right)
         digitalWrite(motorsForwardPins[motorIndex], forwardState);
         digitalWrite(motorsBackwardPins[motorIndex], !forwardState);
 
-#ifdef DEBUG
+#if DEBUG >= 2
         Serial.print("\nMotor ");
         Serial.print(motorIndex);
         Serial.print(" forward pin: ");
@@ -94,7 +94,7 @@ void driveMotors(double left, double right)
     {
         int pwmValue = convertToPWM(calibratieFactors[i] * abs(motorSignals[i]));
         analogWrite(motorsENAPins[i], pwmValue);
-#ifdef DEBUG
+#if DEBUG >= 2
         Serial.print("\nSetting motor: ");
         Serial.print(i);
         Serial.print(", to: ");
