@@ -24,9 +24,6 @@ void loop()
       driveMotors(0,0);
       continue;
     }
-  
-    bool frontSensor = readFrontIRSensor();
-    bool *sensorValues = getSensorValues();
 
     // check for special cases
     if (handlePossibleStopPauseSign()) continue;
