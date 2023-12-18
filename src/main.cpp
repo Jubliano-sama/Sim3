@@ -143,6 +143,13 @@ bool handlePossibleStopPauseSign()
 
   // Checking for for pause sign
   while((millis() - beginTime) < stopPauseDelay){
+    
+    // safety check, if switchpin is low immediately stop motors and return to main loop.
+    if(!digitalRead(switchPin)){
+      driveMotors(0,0);
+      return true;
+    }
+
     driveMotors(0.2,0.2);
     if (isAllZero(getSensorValues(), IRSensorsCount)){
 #if DEBUG >= 1
@@ -158,7 +165,13 @@ bool handlePossibleStopPauseSign()
   Serial.print("\nStop sign detected!");
 #endif
   driveMotors(0,0);
-  while(digitalRead(switchPin) == HIGH);
+  while(digitalRead(switchPin) == HIGH){
+#if DEBUG >= 1
+    Serial.print("\nRobot reached stop sign, toggle switchpin to continue again");
+    delay(1000);
+#endif
+  }
+
   return true;
 }
 
@@ -173,9 +186,9 @@ void handlePauseSign(){
       // stop movement
 #if DEBUG >= 1
       Serial.print("Switchpin detected low");
-      loop();
 #endif
-      driveMotors(0,0);
+    driveMotors(0,0);
+    return;
     }
   }
 }
