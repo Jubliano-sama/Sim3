@@ -1,11 +1,75 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
 
+// Function prototypes
+double pidControl(double setpoint, double input, double Kp, double Ki, double Kd);
+int calculateWeightedArraySum(const bool array[], int arrSize);
+double *calculateMotorInput(double pidOutput);
+bool isAllZero(bool *arr, int arrSize);
+bool isAllOne(bool *arr, int arrSize);
+void handlePauseSign();
+void handlePossibleStopPauseSign();
+bool checkOvershoot();
+void handleOvershoot();
+
 void setup()
 {
-  pinMode(switchPin, INPUT);
   setupBasicFunctions();
-  Serial.begin(9600);
+}
+
+void loop()
+{
+  if (digitalRead(switchPin))
+  {
+    bool frontSensor = readFrontIRSensor();
+    bool *sensorValues = getSensorValues();
+    handlePossibleStopPauseSign();
+    if (checkOvershoot())
+    {
+      handleOvershoot();
+    }
+    else
+    {
+      double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
+      double *motorInput;
+      motorInput = calculateMotorInput(pid);
+#ifdef DEBUG
+      Serial.print("\nPID output:");
+      Serial.print(pid);
+      Serial.print("\nMotor input: ");
+      Serial.print(motorInput[0]);
+      Serial.print(motorInput[1]);
+#endif
+      driveMotors(motorInput[0], motorInput[1]);
+    }
+  }
+  else
+  {
+    delay(500);
+  }
+}
+
+int calculateWeightedArraySum(const bool array[], int arrSize)
+{
+
+  if (arrSize % 2 == 0)
+  {            // Check if array length is even
+    return -1; // Return error if even length
+  }
+
+  int middleIndex = arrSize / 2; // Calculate middle index
+
+  int value = 0; // Initialize result value
+
+  for (int i = 0; i < arrSize; i++)
+  {
+    int arrayValue = array[i];           // Get array value at index i
+    int positionDelta = i - middleIndex; // Calculate position delta
+
+    value += arrayValue * positionDelta; // Adjust result value
+  }
+
+  return value; // Return calculated value
 }
 
 double pidControl(double setpoint, double input, double Kp, double Ki, double Kd)
@@ -49,68 +113,53 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
   return pidOutput;
 }
 
-int calculateWeightedArraySum(const bool array[], int arrSize)
-{
-
-  if (arrSize % 2 == 0)
-  {            // Check if array length is even
-    return -1; // Return error if even length
-  }
-
-  int middleIndex = arrSize / 2; // Calculate middle index
-
-  int value = 0; // Initialize result value
-
-  for (int i = 0; i < arrSize; i++)
-  {
-    int arrayValue = array[i];           // Get array value at index i
-    int positionDelta = i - middleIndex; // Calculate position delta
-
-    value += arrayValue * positionDelta; // Adjust result value
-  }
-
-  return value; // Return calculated value
-}
 double *calculateMotorInput(double pidOutput)
 {
   static double motorInputs[] = {0, 0};
-  pidOutput += 0.5;
-  pidOutput = constrain(pidOutput, 1e-6, 1); // pidOutput = 1 ==> full left pidOutput = o ==> full right
-  if (pidOutput > 0.5)
+  pidOutput = constrain(pidOutput, -0.5, 0.5); // pidOutput = 0.5 ==> turn left pidOutput = -0.5 ==> turn right
+  if (pidOutput > 0)
   {
-    motorInputs[1] = 1;                                   // motorInput[0] = L
-    motorInputs[0] = map(1 / pidOutput - 1, 0, 1, -1, 1); // motorInput[1] = R
+    motorInputs[1] = 1;                                   // motorInput[0] = L // motorInput[1] = R
+    motorInputs[0] = -8*pidOutput*pidOutput +1;           
   }
   else
   {
-    motorInputs[1] = map(1 / pidOutput - 1, 0, 1, -1, 1);
+    motorInputs[1] = -8*pidOutput*pidOutput + 1;
     motorInputs[0] = 1;
   }
   return motorInputs;
 }
 
-bool isAllZero(bool *arr, int arrSize)
+void handlePossibleStopPauseSign()
 {
-  for (int i = 0; i < arrSize; i++)
+  if (!isAllOne(getSensorValues(), IRSensorsCount))
   {
-    if (arr[i] != 0)
-    {
-      return false;
-    }
+    return;
   }
-  return true;
-}
 
-bool isAllOne(bool *arr, int arrSize)
-{
-  for (int i = 0; i < arrSize; i++)
-  {
-    if (arr[i] != 1)
-    {
-      return false;
+#ifdef DEBUG
+    Serial.print("\nStop or pause sign detected: investigating...");
+#endif  
+
+  int beginTime = millis();
+
+  // Checking for for pause sign
+  while((millis() - beginTime) < stopPauseDelay){
+    driveMotors(0.2,0.2);
+    if (isAllZero(getSensorValues(), IRSensorsCount)){
+#ifdef DEBUG
+      Serial.print("\nPause sign detected!");
+#endif  
+      handlePauseSign();
+      return;
     }
   }
-  return true;
+
+  // detected stop sign
+#ifdef DEBUG
+  Serial.print("\nStop sign detected!");
+#endif
+  while(digitalRead(switchPin) == HIGH);
 }
 
 void handlePauseSign(){
@@ -128,41 +177,19 @@ void handlePauseSign(){
   }
 }
 
-void handlePossibleStopPauseSign()
-{
-  if (!isAllOne(getSensorValues(), IRSensorsCount))
-  {
-    return;
-  }
-  int beginTime = millis();
-
-  while((millis() - beginTime) < stopPauseDelay){
-    driveMotors(0.2,0.2);
-    if (isAllZero(getSensorValues(), IRSensorsCount)){
-      handlePauseSign();
-#ifdef DEBUG
-Serial.print("\nPause sign detected");
-#endif
-      return;
-    }
-  }
-
-  // detected stop sign
-#ifdef DEBUG
-  Serial.print("\nStop sign detected");
-#endif
-  while(digitalRead(switchPin) == HIGH);
-}
 bool checkOvershoot()
 {
   if (!isAllZero(getSensorValues(), IRSensorsCount))
   {
     return false;
   }
+
+  /*
   if (readFrontIRSensor())
   {
     return false;
   }
+  */
 
   return true;
 }
@@ -187,34 +214,26 @@ void handleOvershoot()
   }
 }
 
-void loop()
+bool isAllZero(bool *arr, int arrSize)
 {
-  if (digitalRead(switchPin))
+  for (int i = 0; i < arrSize; i++)
   {
-    bool frontSensor = readFrontIRSensor();
-    bool *sensorValues = getSensorValues();
-    handlePossibleStopPauseSign();
-    if (checkOvershoot())
+    if (arr[i] != 0)
     {
-      handleOvershoot();
-    }
-    else
-    {
-      double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
-      double *motorInput;
-      motorInput = calculateMotorInput(pid);
-      driveMotors(motorInput[0], motorInput[1]);
-#ifdef DEBUG
-      Serial.print("\nPID output:");
-      Serial.print(pid);
-      Serial.print("\nMotor input: ");
-      Serial.print(motorInput[0]);
-      Serial.print(motorInput[1]);
-#endif
+      return false;
     }
   }
-  else
+  return true;
+}
+
+bool isAllOne(bool *arr, int arrSize)
+{
+  for (int i = 0; i < arrSize; i++)
   {
-    delay(500);
+    if (arr[i] != 1)
+    {
+      return false;
+    }
   }
+  return true;
 }

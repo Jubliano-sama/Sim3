@@ -19,6 +19,8 @@ void setupBasicFunctions()
 
     // StartSwitch
     pinMode(switchPin, INPUT);
+
+    Serial.begin(115200);
 }
 
 bool readFrontIRSensor()
@@ -60,7 +62,7 @@ int convertToPWM(double input)
 
 void driveMotors(double left, double right)
 {
-    double motorSignals[2] = {left, right};
+    double motorSignals[4] = {left, left, right, right};
 
     if (left > right)
     {
@@ -71,23 +73,33 @@ void driveMotors(double left, double right)
         lastDirection = 0;
     }
 
-    digitalWrite(motorsFowardPins[0], (bool)ceil(left));
-    digitalWrite(motorsFowardPins[1], (bool)ceil(left));
-    digitalWrite(motorsFowardPins[2], (bool)ceil(right));
-    digitalWrite(motorsFowardPins[3], (bool)ceil(right));
-    digitalWrite(motorsBackwardPins[0], !motorsFowardPins[0]);
-    digitalWrite(motorsBackwardPins[1], !motorsFowardPins[1]);
-    digitalWrite(motorsBackwardPins[2], !motorsFowardPins[2]);
-    digitalWrite(motorsBackwardPins[3], !motorsFowardPins[3]);
+    // Set motor direction pins
+    for (int motorIndex = 0; motorIndex < 4; motorIndex++)
+    {
+        bool forwardState = (bool)ceil(motorSignals[motorIndex]);
+        digitalWrite(motorsFowardPins[motorIndex], forwardState);
+        digitalWrite(motorsBackwardPins[motorIndex], !forwardState);
+
+#ifdef DEBUG
+        Serial.print("\nMotor ");
+        Serial.print(motorIndex);
+        Serial.print(" forward pin: ");
+        Serial.print(motorsFowardPins[motorIndex]);
+        Serial.print(", backward pin: ");
+        Serial.print(motorsBackwardPins[motorIndex]);
+#endif
+    }
 
     for (int i = 0; i < 4; i++)
     {
         int pwmValue = convertToPWM(calibratieFactors[i] * abs(motorSignals[i]));
         analogWrite(motorsENAPins[i], pwmValue);
 #ifdef DEBUG
-        Serial.print("\nWriting motor, value:");
+        Serial.print("\nSetting motor: ");
         Serial.print(i);
-        Serial.print(pwmValue);
+        Serial.print(", to: ");
+        Serial.print((float)pwmValue / 255 * 100);
+        Serial.print("%");
 #endif
     }
 }
