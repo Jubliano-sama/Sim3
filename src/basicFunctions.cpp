@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
 
-double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
+double calibratieFactors[] = {0.4, 0.4, 0.4, 0.4}; // calibratiefactoren tussen 0 en 1
 
 bool sensorArr[IRSensorsCount];
 
