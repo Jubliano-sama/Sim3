@@ -8,7 +8,7 @@ double *calculateMotorInput(double pidOutput);
 bool isAllZero(bool *arr, int arrSize);
 bool isAllOne(bool *arr, int arrSize);
 void handlePauseSign();
-void handlePossibleStopPauseSign();
+bool handlePossibleStopPauseSign();
 bool checkOvershoot();
 void handleOvershoot();
 
@@ -19,33 +19,34 @@ void setup()
 
 void loop()
 {
-  if (digitalRead(switchPin))
-  {
+  while(true){
+    if (!digitalRead(switchPin)){
+      driveMotors(0,0);
+      continue;
+    }
+  
     bool frontSensor = readFrontIRSensor();
     bool *sensorValues = getSensorValues();
-    handlePossibleStopPauseSign();
+
+    // check for special cases
+    if (handlePossibleStopPauseSign()) continue;
+
     if (checkOvershoot())
     {
       handleOvershoot();
+      continue;
     }
-    else
-    {
-      double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
-      double *motorInput;
-      motorInput = calculateMotorInput(pid);
+
+    // no special case was found: using normal PID control
+    double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
+    double *motorInput;
+    motorInput = calculateMotorInput(pid);
 #if DEBUG >= 2
-      Serial.print("\nPID output:");
-      Serial.print(pid);
-      Serial.print("\nMotor input: ");
-      Serial.print(motorInput[0]);
-      Serial.print(motorInput[1]);
+    Serial.print("\nPID output:");
+    Serial.print(pid);
 #endif
-      driveMotors(motorInput[0], motorInput[1]);
-    }
-  }
-  else
-  {
-    delay(500);
+    driveMotors(motorInput[0], motorInput[1]);
+    
   }
 }
 
@@ -130,11 +131,11 @@ double *calculateMotorInput(double pidOutput)
   return motorInputs;
 }
 
-void handlePossibleStopPauseSign()
+bool handlePossibleStopPauseSign()
 {
   if (!isAllOne(getSensorValues(), IRSensorsCount))
   {
-    return;
+    return false;
   }
 
 #if DEBUG >= 1
@@ -151,7 +152,7 @@ void handlePossibleStopPauseSign()
       Serial.print("\nPause sign detected!");
 #endif  
       handlePauseSign();
-      return;
+      return true;
     }
   }
 
@@ -159,7 +160,9 @@ void handlePossibleStopPauseSign()
 #if DEBUG >= 1
   Serial.print("\nStop sign detected!");
 #endif
+  driveMotors(0,0);
   while(digitalRead(switchPin) == HIGH);
+  return true;
 }
 
 void handlePauseSign(){
@@ -171,8 +174,11 @@ void handlePauseSign(){
       driveMotors(1,1);
     } else{
       // stop movement
+#if DEBUG >= 1
+      Serial.print("Switchpin detected low");
+      loop();
+#endif
       driveMotors(0,0);
-      delay(5000);
     }
   }
 }
