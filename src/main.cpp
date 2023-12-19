@@ -54,12 +54,6 @@ void loop()
 
 int calculateWeightedArraySum(const bool array[], int arrSize)
 {
-
-	if (arrSize % 2 == 0)
-	{              // Check if array length is even
-		return -1; // Return error if even length
-	}
-
 	int middleIndex = arrSize / 2; // Calculate middle index
 
 	int value = 0; // Initialize result value

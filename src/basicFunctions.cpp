@@ -56,6 +56,8 @@ bool *getSensorValues()
 
 double mapDouble(double x, double inMin, double inMax, double outMin, double outMax)
 {
+	if (inMax == inMin) return x;
+
 	// Check if the input value is within the input range
 	if (x < inMin || x > inMax)
 	{
