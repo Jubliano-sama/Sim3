@@ -5,7 +5,7 @@ double calibratieFactors[] = {0.5, 0.5, 0.5, 0.5}; // calibratiefactoren tussen 
 
 bool sensorArr[IRSensorsCount];
 
-// 0=left, 1=right
+// 0= turning left, 1= turning right
 bool lastDirection = 0;
 
 // Setup

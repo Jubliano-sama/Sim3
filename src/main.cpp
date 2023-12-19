@@ -11,6 +11,7 @@ void handlePauseSign();
 bool handlePossibleStopPauseSign();
 bool checkOvershoot();
 void handleOvershoot();
+void(* resetFunc) (void) = 0;
 
 void setup()
 {
@@ -19,38 +20,36 @@ void setup()
 
 void loop()
 {
-	while (true)
-	{
 	if (!digitalRead(switchPin))
 		{
-			driveMotors(0, 0);
+		driveMotors(0, 0);
 #if DEBUG >= 1
-			Serial.print("\nSwitchpin off");
-			delay(500);
+		Serial.print("\nSwitchpin off");
+		delay(500);
 #endif
-			break;
-		}
-
-		// check for special cases
-		if (handlePossibleStopPauseSign())
-			break;
-
-		if (checkOvershoot())
-		{
-			handleOvershoot();
-			break;
-		}
-
-		// no special case was found: using normal PID control
-		double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
-		double *motorInput;
-		motorInput = calculateMotorInput(pid);
-#if DEBUG >= 2
-		Serial.print("\nPID output: ");
-		Serial.print(pid);
-#endif
-		driveMotors(motorInput[0], motorInput[1]);
+		return;
 	}
+
+	// check for special cases
+	if (handlePossibleStopPauseSign())
+		return;
+
+	if (checkOvershoot())
+	{
+		handleOvershoot();
+		return;
+	}
+
+	// no special case was found: using normal PID control
+	double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
+	double *motorInput;
+	motorInput = calculateMotorInput(pid);
+#if DEBUG >= 2
+	Serial.print("\nPID output: ");
+	Serial.print(pid);
+#endif
+	driveMotors(motorInput[0], motorInput[1]);
+
 }
 
 int calculateWeightedArraySum(const bool array[], int arrSize)
@@ -67,6 +66,14 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
 	for (int i = 0; i < arrSize; i++)
 	{
+
+		// check if sensor is disabled
+		for (int j = 0; j < disabledSensorsCount; j++){
+			if (i == disabledSensors[j]){
+				continue;
+			}
+		}
+
 		int arrayValue = array[i];           // Get array value at index i
 		int positionDelta = i - middleIndex; // Calculate position delta
 
@@ -93,15 +100,17 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
 		return 0;
 	}
 	// Calculate error
-	double error = setpoint - input;
+	double error = input - setpoint;
 
 	// Calculate proportional term
 	double proportional = error * Kp;
 
 	// Calculate integral term
 	static double integral = 0.0;
+	integral = constrain(integral, -0.5/Ki, 0.5/Ki);
 	integral += error * dt;
 	double integralTerm = Ki * integral;
+	integral = constrain(integral, -0.5/Ki, 0.5/Ki);
 
 	// Calculate derivative term
 	double derivative = (error - lastError) / dt;
@@ -124,11 +133,11 @@ double *calculateMotorInput(double pidOutput)
 	if (pidOutput > 0)
 	{
 		motorInputs[1] = 1; // motorInput[0] = L // motorInput[1] = R
-		motorInputs[0] = -8 * pidOutput * pidOutput + 1;
+		motorInputs[0] = -2 * pidOutput + 1;
 	}
 	else
 	{
-		motorInputs[1] = -8 * pidOutput * pidOutput + 1;
+		motorInputs[1] = 2 * pidOutput + 1;
 		motorInputs[0] = 1;
 	}
 	return motorInputs;
@@ -158,7 +167,7 @@ bool handlePossibleStopPauseSign()
 			return true;
 		}
 
-		driveMotors(0.2, 0.2);
+		driveMotors(0.5, 0.5);
 		if (isAllZero(getSensorValues(), IRSensorsCount))
 		{
 #if DEBUG >= 1
@@ -181,7 +190,6 @@ bool handlePossibleStopPauseSign()
 		delay(1000);
 #endif
 	}
-
 	return true;
 }
 
@@ -225,36 +233,26 @@ bool checkOvershoot()
 	return true;
 }
 
-double mapDdouble(double x, double inMin, double inMax, double outMin, double outMax) {
-  // Check if the input value is within the input range
-  if (x < inMin || x > inMax) {
-    return x; // Return the input value if it's outside the range
-  }
-
-  // Calculate the mapped value
-  double deltaIn = inMax - inMin;
-  double deltaOut = outMax - outMin;
-
-  double mappedVal = x - inMin;
-  mappedVal *= deltaOut / deltaIn;
-  mappedVal += outMin;
-
-  return mappedVal;
-}
-
 void handleOvershoot()
 {
 #if DEBUG >= 1
-	Serial.print("/nDetected overshoot, handling it...");
+	Serial.print("\nDetected overshoot, handling it...");
 #endif
 	
 	double directionParsed = (double)map(lastDirection, 0, 1, -1, 1);
 	while (isAllZero(getSensorValues(), IRSensorsCount))
 	{
+		// safety check
+		if (!digitalRead(switchPin))
+		{
+			driveMotors(0, 0);
+			return;
+		}
 		// turn in last direction we went in until overshoot is resolved
 		driveMotors(directionParsed, -directionParsed);
 	}
 }
+
 bool isAllZero(bool *arr, int arrSize)
 {
 	for (int i = 0; i < arrSize; i++)
