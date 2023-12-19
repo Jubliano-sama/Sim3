@@ -24,17 +24,21 @@ void loop()
 	if (!digitalRead(switchPin))
 		{
 			driveMotors(0, 0);
-			continue;
+#if DEBUG >= 1
+			Serial.print("\nSwitchpin off");
+			delay(500);
+#endif
+			break;
 		}
 
 		// check for special cases
 		if (handlePossibleStopPauseSign())
-			continue;
+			break;
 
 		if (checkOvershoot())
 		{
 			handleOvershoot();
-			continue;
+			break;
 		}
 
 		// no special case was found: using normal PID control
@@ -42,7 +46,7 @@ void loop()
 		double *motorInput;
 		motorInput = calculateMotorInput(pid);
 #if DEBUG >= 2
-		Serial.print("\nPID output:");
+		Serial.print("\nPID output: ");
 		Serial.print(pid);
 #endif
 		driveMotors(motorInput[0], motorInput[1]);
@@ -221,31 +225,36 @@ bool checkOvershoot()
 	return true;
 }
 
+double mapDdouble(double x, double inMin, double inMax, double outMin, double outMax) {
+  // Check if the input value is within the input range
+  if (x < inMin || x > inMax) {
+    return x; // Return the input value if it's outside the range
+  }
+
+  // Calculate the mapped value
+  double deltaIn = inMax - inMin;
+  double deltaOut = outMax - outMin;
+
+  double mappedVal = x - inMin;
+  mappedVal *= deltaOut / deltaIn;
+  mappedVal += outMin;
+
+  return mappedVal;
+}
+
 void handleOvershoot()
 {
 #if DEBUG >= 1
 	Serial.print("/nDetected overshoot, handling it...");
 #endif
-	unsigned long startTime = millis();
-	const unsigned long timeout = 5000; // 5 seconds timeout
-
-	while (isAllOne(getSensorValues(), IRSensorsCount))
+	
+	double directionParsed = (double)map(lastDirection, 0, 1, -1, 1);
+	while (isAllZero(getSensorValues(), IRSensorsCount))
 	{
-		// Check for timeout to prevent infinite loop
-		if (millis() - startTime > timeout)
-		{
-#if DEBUG >= 1
-			Serial.println("Overshoot handling timeout");
-#endif
-			break; // Exit the loop if timeout is reached
-		}
-
 		// turn in last direction we went in until overshoot is resolved
-		double directionParsed = map((double)lastDirection, 0, 1, -1, 1);
 		driveMotors(directionParsed, -directionParsed);
 	}
 }
-
 bool isAllZero(bool *arr, int arrSize)
 {
 	for (int i = 0; i < arrSize; i++)

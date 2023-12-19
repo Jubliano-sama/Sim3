@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
 
-double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
+double calibratieFactors[] = {0.5, 0.5, 0.5, 0.5}; // calibratiefactoren tussen 0 en 1
 
 bool sensorArr[IRSensorsCount];
 
@@ -17,6 +17,7 @@ void setupBasicFunctions()
 		pinMode(IRSensors[i], INPUT);
 	}
 
+	pinMode(frontIRSensorPin, INPUT_PULLUP);
 	// StartSwitch
 	pinMode(switchPin, INPUT);
 
@@ -26,7 +27,6 @@ void setupBasicFunctions()
 bool readFrontIRSensor()
 {
 	bool frontIRValue = digitalRead(frontIRSensorPin);
-	frontIRValue = !frontIRValue;
 
 #if DEBUG >= 2
 	Serial.print("\nFront sensor: ");
@@ -40,7 +40,6 @@ void updateIRSensors()
 	for (int i = 0; i < IRSensorsCount; i++)
 	{
 		sensorArr[i] = digitalRead(IRSensors[i]);
-		sensorArr[i] = !sensorArr[i];
 	}
 }
 
@@ -50,18 +49,43 @@ bool *getSensorValues()
 #if DEBUG >= 2
 	Serial.print("\nSensorarr: ");
 	for (bool element : sensorArr) // for each element in the array
-		Serial.print(element);     // print the current element
+		Serial.print(element);	   // print the current element
 #endif
 	return &sensorArr[0];
 }
 
+double mapDouble(double x, double inMin, double inMax, double outMin, double outMax)
+{
+	// Check if the input value is within the input range
+	if (x < inMin || x > inMax)
+	{
+		return x; // Return the input value if it's outside the range
+	}
+
+	// Calculate the mapped value
+	double deltaIn = inMax - inMin;
+	double deltaOut = outMax - outMin;
+
+	double mappedVal = x - inMin;
+	mappedVal *= deltaOut / deltaIn;
+	mappedVal += outMin;
+
+	return mappedVal;
+}
+
 int convertToPWM(double input)
 {
-	return map(input, 0, 1, 0, 255);
+	return (int)mapDouble(input, 0, 1, 0, 255);
 }
 
 void driveMotors(double left, double right)
 {
+#if DEBUG >= 2
+	Serial.print("\nReceived inputs: ");
+	Serial.print(left);
+	Serial.print(" ");
+	Serial.print(right);
+#endif
 	double motorSignals[4] = {left, left, right, right};
 
 	if (left > right)
@@ -76,7 +100,10 @@ void driveMotors(double left, double right)
 	// Set motor direction pins
 	for (int motorIndex = 0; motorIndex < 4; motorIndex++)
 	{
-		bool forwardState = (bool)ceil(motorSignals[motorIndex]);
+		bool forwardState = false;
+		if (motorSignals[motorIndex] > 0){
+			forwardState = true;
+		}
 		digitalWrite(motorsForwardPins[motorIndex], forwardState);
 		digitalWrite(motorsBackwardPins[motorIndex], !forwardState);
 
@@ -95,11 +122,10 @@ void driveMotors(double left, double right)
 		int pwmValue = convertToPWM(calibratieFactors[i] * abs(motorSignals[i]));
 		analogWrite(motorsENAPins[i], pwmValue);
 #if DEBUG >= 2
-		Serial.print("\nSetting motor: ");
+		Serial.print("\nSet motor: ");
 		Serial.print(i);
 		Serial.print(", to: ");
-		Serial.print((float)pwmValue / 255 * 100);
-		Serial.print("%");
+		Serial.print(pwmValue);
 #endif
 	}
 }
