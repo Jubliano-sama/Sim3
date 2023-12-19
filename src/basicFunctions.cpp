@@ -85,7 +85,7 @@ double mapDouble(double x, double inMin, double inMax, double outMin, double out
 
 int convertToPWM(double input)
 {
-	return (int)mapDouble(input, 0, 1, 0, 255);
+	return (int)constrain(mapDouble(input, 0, 1, 0, 255), 0, 255);
 }
 
 void driveMotors(double left, double right)
@@ -111,7 +111,7 @@ void driveMotors(double left, double right)
 	for (int motorIndex = 0; motorIndex < 4; motorIndex++)
 	{
 		bool forwardState = false;
-		if (motorSignals[motorIndex] > 0){
+		if (motorSignals[motorIndex] >= 0){
 			forwardState = true;
 		}
 		digitalWrite(motorsForwardPins[motorIndex], forwardState);
