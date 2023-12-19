@@ -83,7 +83,7 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 	return value; // Return calculated value
 }
 
-double pidControl(double setpoint, double input, double Kp, double Ki, double Kd)
+double pidControl(const double setpoint, const double input, const double Kp, const double Ki, const double Kd)
 {
 	// Store the old time
 	static unsigned long prevTime = 0;
@@ -107,10 +107,9 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
 
 	// Calculate integral term
 	static double integral = 0.0;
-	integral = constrain(integral, -0.5/Ki, 0.5/Ki);
 	integral += error * dt;
-	double integralTerm = Ki * integral;
 	integral = constrain(integral, -0.5/Ki, 0.5/Ki);
+	double integralTerm = Ki * integral;
 
 	// Calculate derivative term
 	double derivative = (error - lastError) / dt;
@@ -129,7 +128,7 @@ double pidControl(double setpoint, double input, double Kp, double Ki, double Kd
 double *calculateMotorInput(double pidOutput)
 {
 	static double motorInputs[] = {0, 0};
-	pidOutput = constrain(pidOutput, -0.5, 0.5); // pidOutput = 0.5 ==> turn left pidOutput = -0.5 ==> turn right
+	pidOutput = constrain(pidOutput, -0.5, 0.5); // pidOutput = 0.5 ==> turn fully left pidOutput = -0.5 ==> turn fully right
 	if (pidOutput > 0)
 	{
 		motorInputs[1] = 1; // motorInput[0] = L // motorInput[1] = R
