@@ -39,6 +39,14 @@ void updateIRSensors()
 {
 	for (int i = 0; i < IRSensorsCount; i++)
 	{
+		// check if sensor is disabled
+		for (int j = 0; j < disabledSensorsCount; j++){
+			if (IRSensors[i] == disabledSensors[j]){
+				sensorArr[i] = LOW;
+				continue;
+			}
+		}
+		
 		sensorArr[i] = digitalRead(IRSensors[i]);
 	}
 }

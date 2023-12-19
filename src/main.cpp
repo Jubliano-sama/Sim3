@@ -60,20 +60,16 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
 	for (int i = 0; i < arrSize; i++)
 	{
-
-		// check if sensor is disabled
-		for (int j = 0; j < disabledSensorsCount; j++){
-			if (i == disabledSensors[j]){
-				continue;
-			}
-		}
-
 		int arrayValue = array[i];           // Get array value at index i
 		int positionDelta = i - middleIndex; // Calculate position delta
 
 		value += arrayValue * positionDelta; // Adjust result value
 	}
 
+#if DEBUG >= 2
+	Serial.print("\nWeighted sum: ");
+	Serial.print(value);
+#endif
 	return value; // Return calculated value
 }
 
@@ -94,7 +90,7 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 		return 0;
 	}
 	// Calculate error
-	double error = input - setpoint;
+	double error = setpoint - input;
 
 	// Calculate proportional term
 	double proportional = error * Kp;
@@ -119,21 +115,18 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 	return pidOutput;
 }
 
-double *calculateMotorInput(double pidOutput)
-{
-	static double motorInputs[] = {0, 0};
-	pidOutput = constrain(pidOutput, -0.5, 0.5); // pidOutput = 0.5 ==> turn fully left pidOutput = -0.5 ==> turn fully right
-	if (pidOutput > 0)
-	{
-		motorInputs[1] = 1; // motorInput[0] = L // motorInput[1] = R
-		motorInputs[0] = -2 * pidOutput + 1;
-	}
-	else
-	{
-		motorInputs[1] = 2 * pidOutput + 1;
-		motorInputs[0] = 1;
-	}
-	return motorInputs;
+double* calculateMotorInput(double pidOutput) {
+    static double motorInputs[2]; // [left, right]
+
+    // Clipping the pidOutput between -0.5 and 0.5
+    pidOutput = constrain(pidOutput, -0.5, 0.5);
+
+    // Calculating the motor inputs based on the new linear relationships
+    // and clipping them at a maximum of 1
+    motorInputs[0] = min(-4 * pidOutput + 1, 1); // Left motor (non-dominant)
+    motorInputs[1] = min(4 * pidOutput + 1, 1);  // Right motor (non-dominant)
+
+    return motorInputs;
 }
 
 bool handlePossibleStopPauseSign()
@@ -211,9 +204,9 @@ void handlePauseSign()
 
 bool checkOvershoot()
 {
-	if (!isAllZero(getSensorValues(), IRSensorsCount))
+	if (isAllZero(getSensorValues(), IRSensorsCount))
 	{
-		return false;
+		return true;
 	}
 
 	/*
@@ -223,7 +216,7 @@ bool checkOvershoot()
 	}
 	*/
 
-	return true;
+	return false;
 }
 
 void handleOvershoot()
@@ -242,6 +235,9 @@ void handleOvershoot()
 			return;
 		}
 		// turn in last direction we went in until overshoot is resolved
+#if DEBUG >= 2
+		Serial.print("Overshoot still detected... turning more");
+#endif
 		driveMotors(directionParsed, -directionParsed);
 	}
 }
