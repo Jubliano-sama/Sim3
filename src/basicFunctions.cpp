@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
 
-double calibratieFactors[] = {0.5, 0.5, 0.5, 0.5}; // calibratiefactoren tussen 0 en 1
+double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
 
 bool sensorArr[IRSensorsCount];
 
@@ -19,7 +19,7 @@ void setupBasicFunctions()
 
 	pinMode(frontIRSensorPin, INPUT_PULLUP);
 	// StartSwitch
-	pinMode(switchPin, INPUT);
+	pinMode(switchPin, INPUT_PULLUP);
 
 	Serial.begin(115200);
 }
@@ -59,6 +59,12 @@ bool *getSensorValues()
 	for (bool element : sensorArr) // for each element in the array
 		Serial.print(element);	   // print the current element
 #endif
+
+	if (sensorArr[0] == 0 ){
+		lastDirection = 1;
+	} else if (sensorArr[IRSensorsCount - 1] == 1){
+		lastDirection = 0;
+	}
 	return &sensorArr[0];
 }
 
@@ -97,15 +103,6 @@ void driveMotors(double left, double right)
 	Serial.print(right);
 #endif
 	double motorSignals[4] = {left, left, right, right};
-
-	if (left > right)
-	{
-		lastDirection = 1;
-	}
-	else
-	{
-		lastDirection = 0;
-	}
 
 	// Set motor direction pins
 	for (int motorIndex = 0; motorIndex < 4; motorIndex++)

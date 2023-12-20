@@ -140,7 +140,7 @@ bool handlePossibleStopPauseSign()
 	Serial.print("\nStop or pause sign detected: investigating...");
 #endif
 
-	int beginTime = millis();
+	unsigned long beginTime = millis();
 
 	// Checking for for pause sign
 	while ((millis() - beginTime) < stopPauseDelay)
@@ -238,7 +238,7 @@ void handleOvershoot()
 #if DEBUG >= 2
 		Serial.print("Overshoot still detected... turning more");
 #endif
-		driveMotors(directionParsed, -directionParsed);
+		driveMotors(directionParsed * 0.4, -directionParsed * 0.4);
 	}
 }
 

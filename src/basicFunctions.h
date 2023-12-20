@@ -3,8 +3,8 @@
 // 0 = No Debug, 1 = Only special cases(pause,stop,overshoot), 2 = everyhting
 #define DEBUG 2
 
-const double Kp = 0.08;
-const double Ki = 0.00;
+const double Kp = 0.03;
+const double Ki = 0.0;
 const double Kd = 0;
 
 const int switchPin = 53;
@@ -19,7 +19,7 @@ const int disabledSensorsCount = 0;
 const int motorsBackwardPins[]={43,49,47,45}; //{lv,la,rv,ra}
 const int motorsForwardPins[]={50,48,46,44};
 const int motorsENAPins[]={6,3,4,5};
-const int stopPauseDelay = 1000;
+const int stopPauseDelay = 500;
 
 extern bool lastDirection;
 
