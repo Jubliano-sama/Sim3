@@ -68,6 +68,39 @@ bool *getSensorValues()
 	return &sensorArr[0];
 }
 
+bool* getAnalogSensorValues() {
+    static bool analogSensorArr[analogSensorsCount];
+    
+    #if DEBUG >= 2
+    Serial.print("\n[");
+    #endif
+
+    for (int i = 0; i < analogSensorsCount; i++) {
+        int sensorValue = analogRead(analogSensors[i]);
+        analogSensorArr[i] = sensorValue > analogSensorThresholds[i];
+
+        // Debugging: Output analog values
+        #if DEBUG >= 2
+        Serial.print(sensorValue);
+        if (i < analogSensorsCount - 1) {
+            Serial.print(", ");
+        }
+        #endif
+    }
+
+    // Debugging: Output boolean values
+    #if DEBUG >= 2
+    Serial.println("]");
+    Serial.print(" Digital Values: [");
+    for (int i = 0; i < analogSensorsCount; i++) {
+        Serial.print(analogSensorArr[i]);
+    }
+    Serial.println("]");
+    #endif
+
+    return analogSensorArr;
+}
+
 double mapDouble(double x, double inMin, double inMax, double outMin, double outMax)
 {
 	if (inMax == inMin) return x;
