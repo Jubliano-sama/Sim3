@@ -12,15 +12,15 @@ const int IRSensors[] ={22,23,24,25,26,27,28,29,30,31,32,33,34,35,36};
 const int IRSensorsCount = 7;
 const int frontIRSensorPin=52;
 
-const int analogSensors[] = {A0, A1, A2}; // Update with actual analog sensor pins
-const int analogSensorsCount = 3; // Update with the actual number of analog sensors
-const int analogSensorThresholds[] = {500, 500, 500}; // Update with actual threshold values
+const int analogSensors[] = {A0, A1, A2, A3, A4, A5, A7, A8, A9}; // Update with actual analog sensor pins
+const int analogSensorsCount = 9; // Update with the actual number of analog sensors
+const int analogSensorThresholds[] = {100, 100, 100, 100, 100, 100, 100, 100, 100}; // Update with actual threshold values
 
 // Add array index to this to disable them as input
 const int disabledSensors[] = {};
 const int disabledSensorsCount = 0;
 
-const int motorsBackwardPins[]={43,49,47,45}; //{lv,la,rv,ra}
+const int motorsBackwardPins[]={51,49,47,45}; //{lv,la,rv,ra}
 const int motorsForwardPins[]={50,48,46,44};
 const int motorsENAPins[]={6,3,4,5};
 const int stopPauseDelay = 500;

@@ -41,7 +41,7 @@ void loop()
 	}
 
 	// no special case was found: using normal PID control
-	double pid = pidControl(0, calculateWeightedArraySum(getSensorValues(), IRSensorsCount), Kp, Ki, Kd);
+	double pid = pidControl(0, calculateWeightedArraySum(getAnalogSensorValues(), IRSensorsCount), Kp, Ki, Kd);
 	double *motorInput;
 	motorInput = calculateMotorInput(pid);
 #if DEBUG >= 2
@@ -131,7 +131,7 @@ double* calculateMotorInput(double pidOutput) {
 
 bool handlePossibleStopPauseSign()
 {
-	if (!isAllOne(getSensorValues(), IRSensorsCount))
+	if (!isAllOne(getAnalogSensorValues(), IRSensorsCount))
 	{
 		return false;
 	}
@@ -154,7 +154,7 @@ bool handlePossibleStopPauseSign()
 		}
 
 		driveMotors(0.5, 0.5);
-		if (isAllZero(getSensorValues(), IRSensorsCount))
+		if (isAllZero(getAnalogSensorValues(), IRSensorsCount))
 		{
 #if DEBUG >= 1
 			Serial.print("\nPause sign detected!");
@@ -183,7 +183,7 @@ void handlePauseSign()
 {
 	delay(5000);
 
-	while (isAllZero(getSensorValues(), IRSensorsCount) || isAllOne(getSensorValues(), IRSensorsCount))
+	while (isAllZero(getAnalogSensorValues(), IRSensorsCount) || isAllOne(getAnalogSensorValues(), IRSensorsCount))
 	{
 		if (digitalRead(switchPin))
 		{
@@ -204,7 +204,7 @@ void handlePauseSign()
 
 bool checkOvershoot()
 {
-	if (isAllZero(getSensorValues(), IRSensorsCount))
+	if (isAllZero(getAnalogSensorValues(), IRSensorsCount))
 	{
 		return true;
 	}
@@ -226,7 +226,7 @@ void handleOvershoot()
 #endif
 	
 	double directionParsed = (double)map(lastDirection, 0, 1, -1, 1);
-	while (isAllZero(getSensorValues(), IRSensorsCount))
+	while (isAllZero(getAnalogSensorValues(), IRSensorsCount))
 	{
 		// safety check
 		if (!digitalRead(switchPin))

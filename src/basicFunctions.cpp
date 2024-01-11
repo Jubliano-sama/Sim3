@@ -21,7 +21,7 @@ void setupBasicFunctions()
 	// StartSwitch
 	pinMode(switchPin, INPUT_PULLUP);
 
-	Serial.begin(115200);
+	Serial.begin(9600);
 }
 
 bool readFrontIRSensor()
