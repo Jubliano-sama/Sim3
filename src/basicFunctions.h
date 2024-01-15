@@ -3,8 +3,8 @@
 // 0 = No Debug, 1 = Only special cases(pause,stop,overshoot), 2 = everyhting
 #define DEBUG 2
 
-const double Kp = 0.05;
-const double Ki = 0.0;
+const double Kp = 0.11;
+const double Ki = 0.000002;
 const double Kd = 0;
 
 const int switchPin = 53;

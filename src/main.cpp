@@ -98,7 +98,7 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 	// Calculate integral term
 	static double integral = 0.0;
 	integral += error * dt;
-	integral = constrain(integral, -0.5 / Ki, 0.5 / Ki);
+	integral = constrain(integral, -0.25 / Ki, 0.25 / Ki);
 	double integralTerm = Ki * integral;
 
 	// Calculate derivative term
@@ -223,6 +223,7 @@ bool checkOvershoot()
 
 void handleOvershoot()
 {
+	double speed = 0.1;
 #if DEBUG >= 1
 	Serial.print("\nDetected overshoot, handling it...");
 #endif
@@ -240,7 +241,14 @@ void handleOvershoot()
 #if DEBUG >= 2
 		Serial.print("Overshoot still detected... turning more");
 #endif
-		driveMotors(directionParsed * 0.8, -directionParsed * 0.8);
+		if (speed < 0.9){
+			speed += 0.1;
+		}
+		delay(10);
+	#if DEBUG >= 2
+		Serial.println(speed);
+#endif
+		driveMotors(directionParsed * speed, -directionParsed * speed);
 	}
 }
 
