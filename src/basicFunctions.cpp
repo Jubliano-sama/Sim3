@@ -6,7 +6,7 @@ double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
 bool sensorArr[IRSensorsCount];
 
 // 0= turning left, 1= turning right
-bool lastDirection = 0;
+int lastDirection = 1;
 
 // Setup
 void setupBasicFunctions()
@@ -21,7 +21,7 @@ void setupBasicFunctions()
 	// StartSwitch
 	pinMode(switchPin, INPUT_PULLUP);
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 }
 
 bool readFrontIRSensor()
@@ -98,6 +98,11 @@ bool* getAnalogSensorValues() {
     Serial.println("]");
     #endif
 
+	if (analogSensorArr[0] == 1 ){
+		lastDirection = -1;
+	} else if (analogSensorArr[analogSensorsCount - 1] == 1){
+		lastDirection = 1;
+	}
     return analogSensorArr;
 }
 

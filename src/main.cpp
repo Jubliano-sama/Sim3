@@ -9,9 +9,10 @@ bool isAllZero(bool *arr, int arrSize);
 bool isAllOne(bool *arr, int arrSize);
 void handlePauseSign();
 bool handlePossibleStopPauseSign();
+int arrayBoolSum(bool *arr, int arrCount);
 bool checkOvershoot();
 void handleOvershoot();
-void(* resetFunc) (void) = 0;
+void (*resetFunc)(void) = 0;
 
 void setup()
 {
@@ -21,7 +22,7 @@ void setup()
 void loop()
 {
 	if (!digitalRead(switchPin))
-		{
+	{
 		driveMotors(0, 0);
 #if DEBUG >= 1
 		Serial.print("\nSwitchpin off");
@@ -41,7 +42,7 @@ void loop()
 	}
 
 	// no special case was found: using normal PID control
-	double pid = pidControl(0, calculateWeightedArraySum(getAnalogSensorValues(), IRSensorsCount), Kp, Ki, Kd);
+	double pid = pidControl(0, calculateWeightedArraySum(getAnalogSensorValues(), analogSensorsCount), Kp, Ki, Kd);
 	double *motorInput;
 	motorInput = calculateMotorInput(pid);
 #if DEBUG >= 2
@@ -49,7 +50,6 @@ void loop()
 	Serial.print(pid);
 #endif
 	driveMotors(motorInput[0], motorInput[1]);
-
 }
 
 int calculateWeightedArraySum(const bool array[], int arrSize)
@@ -60,7 +60,7 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
 	for (int i = 0; i < arrSize; i++)
 	{
-		int arrayValue = array[i];           // Get array value at index i
+		int arrayValue = array[i];			 // Get array value at index i
 		int positionDelta = i - middleIndex; // Calculate position delta
 
 		value += arrayValue * positionDelta; // Adjust result value
@@ -98,7 +98,7 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 	// Calculate integral term
 	static double integral = 0.0;
 	integral += error * dt;
-	integral = constrain(integral, -0.5/Ki, 0.5/Ki);
+	integral = constrain(integral, -0.5 / Ki, 0.5 / Ki);
 	double integralTerm = Ki * integral;
 
 	// Calculate derivative term
@@ -115,23 +115,24 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 	return pidOutput;
 }
 
-double* calculateMotorInput(double pidOutput) {
-    static double motorInputs[2]; // [left, right]
+double *calculateMotorInput(double pidOutput)
+{
+	static double motorInputs[2]; // [left, right]
 
-    // Clipping the pidOutput between -0.5 and 0.5
-    pidOutput = constrain(pidOutput, -0.5, 0.5);
+	// Clipping the pidOutput between -0.5 and 0.5
+	pidOutput = constrain(pidOutput, -0.5, 0.5);
 
-    // Calculating the motor inputs based on the new linear relationships
-    // and clipping them at a maximum of 1
-    motorInputs[0] = min(-4 * pidOutput + 1, 1); // Left motor (non-dominant)
-    motorInputs[1] = min(4 * pidOutput + 1, 1);  // Right motor (non-dominant)
+	// Calculating the motor inputs based on the new linear relationships
+	// and clipping them at a maximum of 1
+	motorInputs[0] = min(-4 * pidOutput + 1, 1); // Left motor (non-dominant)
+	motorInputs[1] = min(4 * pidOutput + 1, 1);	 // Right motor (non-dominant)
 
-    return motorInputs;
+	return motorInputs;
 }
 
 bool handlePossibleStopPauseSign()
 {
-	if (!isAllOne(getAnalogSensorValues(), IRSensorsCount))
+	if (!isAllOne(getAnalogSensorValues(), analogSensorsCount))
 	{
 		return false;
 	}
@@ -153,8 +154,8 @@ bool handlePossibleStopPauseSign()
 			return true;
 		}
 
-		driveMotors(0.5, 0.5);
-		if (isAllZero(getAnalogSensorValues(), IRSensorsCount))
+		driveMotors(0.3, 0.3);
+		if (arrayBoolSum(getAnalogSensorValues(), analogSensorsCount) <= 2)
 		{
 #if DEBUG >= 1
 			Serial.print("\nPause sign detected!");
@@ -181,9 +182,10 @@ bool handlePossibleStopPauseSign()
 
 void handlePauseSign()
 {
+	driveMotors(0, 0);
 	delay(5000);
 
-	while (isAllZero(getAnalogSensorValues(), IRSensorsCount) || isAllOne(getAnalogSensorValues(), IRSensorsCount))
+	while (isAllZero(getAnalogSensorValues(), analogSensorsCount) || isAllOne(getAnalogSensorValues(), analogSensorsCount))
 	{
 		if (digitalRead(switchPin))
 		{
@@ -204,7 +206,7 @@ void handlePauseSign()
 
 bool checkOvershoot()
 {
-	if (isAllZero(getAnalogSensorValues(), IRSensorsCount))
+	if (isAllZero(getAnalogSensorValues(), analogSensorsCount))
 	{
 		return true;
 	}
@@ -224,9 +226,9 @@ void handleOvershoot()
 #if DEBUG >= 1
 	Serial.print("\nDetected overshoot, handling it...");
 #endif
-	
-	double directionParsed = (double)map(lastDirection, 0, 1, -1, 1);
-	while (isAllZero(getAnalogSensorValues(), IRSensorsCount))
+
+	double directionParsed = (double)lastDirection;
+	while (isAllZero(getAnalogSensorValues(), analogSensorsCount))
 	{
 		// safety check
 		if (!digitalRead(switchPin))
@@ -238,8 +240,18 @@ void handleOvershoot()
 #if DEBUG >= 2
 		Serial.print("Overshoot still detected... turning more");
 #endif
-		driveMotors(directionParsed * 0.4, -directionParsed * 0.4);
+		driveMotors(directionParsed * 0.8, -directionParsed * 0.8);
 	}
+}
+
+int arrayBoolSum(bool *arr, int arrCount)
+{
+	int count = 0;
+	for (int i = 0; i < arrCount; i++)
+	{
+		count += (int)arr[i];
+	}
+	return count;
 }
 
 bool isAllZero(bool *arr, int arrSize)
