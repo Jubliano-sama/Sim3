@@ -3,8 +3,6 @@
 
 double calibratieFactors[] = {1, 1, 1, 1}; // calibratiefactoren tussen 0 en 1
 
-bool sensorArr[IRSensorsCount];
-
 // 0= turning left, 1= turning right
 int lastDirection = 1;
 
@@ -12,60 +10,14 @@ int lastDirection = 1;
 void setupBasicFunctions()
 {
 	// IR sensoren
-	for (int i = 0; i < IRSensorsCount; i++)
+	for (int i = 0; i < analogSensorsCount; i++)
 	{
-		pinMode(IRSensors[i], INPUT);
+		pinMode(analogSensors[i], INPUT);
 	}
-
-	pinMode(frontIRSensorPin, INPUT_PULLUP);
 	// StartSwitch
 	pinMode(switchPin, INPUT_PULLUP);
 
 	Serial.begin(115200);
-}
-
-bool readFrontIRSensor()
-{
-	bool frontIRValue = digitalRead(frontIRSensorPin);
-
-#if DEBUG >= 2
-	Serial.print("\nFront sensor: ");
-	Serial.print(frontIRValue);
-#endif
-	return frontIRValue;
-}
-
-void updateIRSensors()
-{
-	for (int i = 0; i < IRSensorsCount; i++)
-	{
-		// check if sensor is disabled
-		for (int j = 0; j < disabledSensorsCount; j++){
-			if (IRSensors[i] == disabledSensors[j]){
-				sensorArr[i] = LOW;
-				continue;
-			}
-		}
-		
-		sensorArr[i] = digitalRead(IRSensors[i]);
-	}
-}
-
-bool *getSensorValues()
-{
-	updateIRSensors();
-#if DEBUG >= 2
-	Serial.print("\nSensorarr: ");
-	for (bool element : sensorArr) // for each element in the array
-		Serial.print(element);	   // print the current element
-#endif
-
-	if (sensorArr[0] == 0 ){
-		lastDirection = 1;
-	} else if (sensorArr[IRSensorsCount - 1] == 1){
-		lastDirection = 0;
-	}
-	return &sensorArr[0];
 }
 
 bool* getAnalogSensorValues() {
