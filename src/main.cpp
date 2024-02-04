@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "basicFunctions.h"
+#include "display.h"
 
 // Function prototypes
 double pidControl(double setpoint, double input, double Kp, double Ki, double Kd);
@@ -14,9 +15,12 @@ bool checkOvershoot();
 void handleOvershoot();
 void (*resetFunc)(void) = 0;
 
+int lastBarsUpdateTime = 0;
+
 void setup()
 {
 	setupBasicFunctions();
+	setupDisplay();
 }
 
 void loop()
@@ -42,7 +46,10 @@ void loop()
 	}
 
 	// no special case was found: using normal PID control
-	double pid = pidControl(0, calculateWeightedArraySum(getAnalogSensorValues(), analogSensorsCount), Kp, Ki, Kd);
+	bool* sensorValues = getAnalogSensorValues();
+	
+	if (millis() - lastBarsUpdateTime > displayBarsRefreshTime) displayBoolArrayAsBars(sensorValues, analogSensorsCount);
+	double pid = pidControl(0, calculateWeightedArraySum(sensorValues, analogSensorsCount), Kp, Ki, Kd);
 	double *motorInput;
 	motorInput = calculateMotorInput(pid);
 #if DEBUG >= 2
@@ -170,6 +177,7 @@ bool handlePossibleStopPauseSign()
 	Serial.print("\nStop sign detected!");
 #endif
 	driveMotors(0, 0);
+	displayText("Stopped");
 	while (digitalRead(switchPin) == HIGH)
 	{
 #if DEBUG >= 1
@@ -182,6 +190,7 @@ bool handlePossibleStopPauseSign()
 
 void handlePauseSign()
 {
+	displayText("Paused");
 	driveMotors(0, 0);
 	delay(5000);
 
@@ -223,6 +232,7 @@ bool checkOvershoot()
 
 void handleOvershoot()
 {
+	displayText("Overshoot");
 	double speed = 0.1;
 #if DEBUG >= 1
 	Serial.print("\nDetected overshoot, handling it...");

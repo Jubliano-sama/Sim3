@@ -21,6 +21,8 @@ const int motorsBackwardPins[]={50,48,46,44};
 const int motorsENAPins[]={6,3,4,5};
 const int stopPauseDelay = 700;
 
+const int displayBarsRefreshTime = 100;
+
 extern int lastDirection;
 
 void setupBasicFunctions();
