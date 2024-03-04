@@ -133,10 +133,13 @@ void testMotors()
 	delay(1000);
 
 	// Example servo movements
+	moveServo(elbowServo, 0); // Move elbow servo to 90 degrees
 	moveServo(elbowServo, 90); // Move elbow servo to 90 degrees
 	delay(1000);
-	moveServo(shoulderServo, 45); // Move shoulder servo to 45 degrees
+	moveServo(shoulderServo, 0); // Move shoulder servo to 45 degrees
+	moveServo(shoulderServo, 90); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(gripServo, 10); // Close grip slightly (10 degrees)
+	moveServo(gripServo, 0); // Close grip slightly (10 degrees)
+	moveServo(gripServo, 90); // Close grip slightly (10 degrees)
 	delay(1000);
 }
