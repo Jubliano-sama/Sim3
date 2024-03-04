@@ -1,5 +1,6 @@
 #include "motor.h"
 #include "config.h"
+#include <TimerOne.h>
 
 // Initialize AccelStepper for the stepper motor
 AccelStepper stepper(motorInterfaceType, stepPin, dirPin);
@@ -23,6 +24,14 @@ void setupMotors()
 	elbowServo.attach(ELBOW_SERVO_PIN);
 	shoulderServo.attach(SHOULDER_SERVO_PIN);
 	gripServo.attach(GRIP_SERVO_PIN);
+
+	Timer1.initialize(stepperMaxSpeed);	   // Set the timer period to 10ms
+	Timer1.attachInterrupt(updateStepper); // Attach the stepper update function
+}
+
+void updateStepper()
+{
+	stepper.run();
 }
 
 void moveStepper(int steps)
@@ -49,13 +58,14 @@ void rotateShoulderAbsoluteAngle(float angle)
 	stepper.move(angleToSteps(angle - currentAngle));
 }
 
-void zeroStepperPosition(){
+void zeroStepperPosition()
+{
 	// Reset the stepper motor position to zero
-    stepper.setCurrentPosition(0);
-    Serial.println("Stepper position reset to 0.");
+	stepper.setCurrentPosition(0);
+	Serial.println("Stepper position reset to 0.");
 }
 
-//function assumes stepper starts at 0 steps at degree 0
+// function assumes stepper starts at 0 steps at degree 0
 float positionToAngle(int position)
 {
 	float angle = (static_cast<float>(position) / shoulderRotationSteps) * 360.0f;
@@ -65,9 +75,9 @@ float positionToAngle(int position)
 		angle += 360.0f;
 	}
 	Serial.print("Converted position ");
-    Serial.print(position);
-    Serial.print(" to angle: ");
-    Serial.println(angle);
+	Serial.print(position);
+	Serial.print(" to angle: ");
+	Serial.println(angle);
 	return angle;
 }
 
@@ -90,9 +100,9 @@ int angleToSteps(float angle)
 	}
 
 	Serial.print("Converted angle ");
-    Serial.print(angle);
-    Serial.print(" to steps: ");
-    Serial.println(stepsNormalized);
+	Serial.print(angle);
+	Serial.print(" to steps: ");
+	Serial.println(stepsNormalized);
 
 	return static_cast<int>(round(stepsNormalized));
 }
@@ -133,13 +143,13 @@ void testMotors()
 	delay(1000);
 
 	// Example servo movements
-	moveServo(elbowServo, 0); // Move elbow servo to 90 degrees
+	moveServo(elbowServo, 0);  // Move elbow servo to 90 degrees
 	moveServo(elbowServo, 90); // Move elbow servo to 90 degrees
 	delay(1000);
-	moveServo(shoulderServo, 0); // Move shoulder servo to 45 degrees
+	moveServo(shoulderServo, 0);  // Move shoulder servo to 45 degrees
 	moveServo(shoulderServo, 90); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(gripServo, 0); // Close grip slightly (10 degrees)
+	moveServo(gripServo, 0);  // Close grip slightly (10 degrees)
 	moveServo(gripServo, 90); // Close grip slightly (10 degrees)
 	delay(1000);
 }
