@@ -2,19 +2,19 @@
 
 #include <FastAccelStepper.h>
 #include <Arduino.h>
-#include <Servo.h>
+#include <PWMServo.h>
 
 // Servo objects
-Servo elbowServo;
-Servo shoulderServo;
-Servo gripServo;
+PWMServo elbowServo;
+PWMServo shoulderServo;
+PWMServo gripServo;
 
 void rotateShoulderAbsoluteAngle(float angle);
 bool hasStepperReachedPosition();
 void zeroStepperPosition();
 void stopShoulder();
 
-void moveServo(Servo servo, int angle);
+void moveServo(PWMServo, int angle);
 void moveElbowServo(int angle);
 void moveShoulderServo(int angle);
 void moveGripServo(int angle);

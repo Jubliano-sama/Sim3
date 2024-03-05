@@ -13,7 +13,7 @@ const float stepperGearRatio = 2.5; // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
 
-// Servo control pins (adjust these to your setup)
+// Servo control pins MAKE SURE THESE ARE PWM PINS
 #define ELBOW_SERVO_PIN 9
 #define SHOULDER_SERVO_PIN 10
 #define GRIP_SERVO_PIN 11

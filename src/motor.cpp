@@ -11,7 +11,6 @@ void stopShoulder();
 void rotateShoulderAbsoluteAngle(float angle);
 float positionToAngle(int position);
 int angleToSteps(float angle);
-void moveServo(Servo servo, int angle);
 void testMotors();
 
 void setupMotors()
@@ -108,7 +107,7 @@ int angleToSteps(float angle)
 	return static_cast<int>(round(stepsNormalized));
 }
 
-void moveServo(Servo servo, int angle)
+void moveServo(PWMServo servo, int angle)
 {
 	servo.write(angle);
 }
