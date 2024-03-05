@@ -61,7 +61,7 @@ void zeroStepperPosition()
 	Serial.println("Stepper position reset to 0.");
 }
 
-bool hasStapperReachedPosition(){
+bool hasStepperReachedPosition(){
 	return !stepper->isRunning();
 }
 
@@ -138,10 +138,10 @@ void testMotors()
 {
 	// Example stepper motor usage
 	moveStepper(200);
-	while(!hasStapperReachedPosition());
+	while(!hasStepperReachedPosition());
 	delay(1000);
 	moveStepper(-200);
-	while(!hasStapperReachedPosition());
+	while(!hasStepperReachedPosition());
 	delay(1000);
 
 	// Example servo movements
