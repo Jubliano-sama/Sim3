@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AccelStepper.h>
+#include <FastAccelStepper.h>
 #include <Arduino.h>
 #include <Servo.h>
 

@@ -2,8 +2,8 @@
 #include "config.h"
 #include <TimerOne.h>
 
-// Initialize AccelStepper for the stepper motor
-AccelStepper stepper(motorInterfaceType, stepPin, dirPin);
+FastAccelStepperEngine engine = FastAccelStepperEngine();
+FastAccelStepper *stepper = NULL;
 
 void setupMotors();
 void moveStepper(int steps);
@@ -16,37 +16,33 @@ void testMotors();
 
 void setupMotors()
 {
-	// Stepper motor setup
-	stepper.setMaxSpeed(stepperMaxSpeed);
-	stepper.setAcceleration(stepperAcceleration);
+	engine.init();
+	stepper = engine.stepperConnectToPin(stepPin);
+	if (stepper){
+		stepper->setDirectionPin(dirPin);
+		stepper->setAcceleration(stepperAcceleration);
+		stepper->setSpeedInHz(stepperMaxSpeed);
+	}
 
 	// Servo setup
 	elbowServo.attach(ELBOW_SERVO_PIN);
 	shoulderServo.attach(SHOULDER_SERVO_PIN);
 	gripServo.attach(GRIP_SERVO_PIN);
-
-	Timer1.initialize(stepperMaxSpeed);	   // Set the timer period to 10ms
-	Timer1.attachInterrupt(updateStepper); // Attach the stepper update function
 }
 
-void updateStepper()
-{
-	stepper.run();
-}
 
 void moveStepper(int steps)
 {
 	Serial.print("Moving stepper ");
 	Serial.print(steps);
 	Serial.println(" steps.");
-	stepper.move(steps);
-	stepper.runToPosition();
+	stepper->move(steps);
 }
 
 void stopShoulder()
 {
 	Serial.println("Stopping stepper motor immediately.");
-	stepper.stop();
+	stepper->stopMove();
 }
 
 // assume we start at angle 0
@@ -54,15 +50,19 @@ void rotateShoulderAbsoluteAngle(float angle)
 {
 	Serial.print("Rotating shoulder to absolute angle: ");
 	Serial.println(angle);
-	const float currentAngle = positionToAngle(stepper.currentPosition());
-	stepper.move(angleToSteps(angle - currentAngle));
+	const float currentAngle = positionToAngle(stepper->getCurrentPosition());
+	stepper->move(angleToSteps(angle - currentAngle));
 }
 
 void zeroStepperPosition()
 {
 	// Reset the stepper motor position to zero
-	stepper.setCurrentPosition(0);
+	stepper->setCurrentPosition(0);
 	Serial.println("Stepper position reset to 0.");
+}
+
+bool hasStapperReachedPosition(){
+	return !stepper->isRunning();
 }
 
 // function assumes stepper starts at 0 steps at degree 0
@@ -138,8 +138,10 @@ void testMotors()
 {
 	// Example stepper motor usage
 	moveStepper(200);
+	while(!hasStapperReachedPosition());
 	delay(1000);
 	moveStepper(-200);
+	while(!hasStapperReachedPosition());
 	delay(1000);
 
 	// Example servo movements
