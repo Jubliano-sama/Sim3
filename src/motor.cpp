@@ -18,7 +18,8 @@ void setupMotors()
 {
 	engine.init();
 	stepper = engine.stepperConnectToPin(stepPin);
-	if (stepper){
+	if (stepper)
+	{
 		stepper->setDirectionPin(dirPin);
 		stepper->setAcceleration(stepperAcceleration);
 		stepper->setSpeedInHz(stepperMaxSpeed);
@@ -29,7 +30,6 @@ void setupMotors()
 	shoulderServo.attach(SHOULDER_SERVO_PIN);
 	gripServo.attach(GRIP_SERVO_PIN);
 }
-
 
 void moveStepper(int steps)
 {
@@ -51,7 +51,7 @@ void rotateShoulderAbsoluteAngle(float angle)
 	Serial.print("Rotating shoulder to absolute angle: ");
 	Serial.println(angle);
 	const float currentAngle = positionToAngle(stepper->getCurrentPosition());
-	stepper->move(angleToSteps(angle - currentAngle));
+	moveStepper(angleToSteps(angle - currentAngle));
 }
 
 void zeroStepperPosition()
@@ -61,7 +61,8 @@ void zeroStepperPosition()
 	Serial.println("Stepper position reset to 0.");
 }
 
-bool hasStepperReachedPosition(){
+bool hasStepperReachedPosition()
+{
 	return !stepper->isRunning();
 }
 
@@ -138,20 +139,25 @@ void testMotors()
 {
 	// Example stepper motor usage
 	moveStepper(200);
-	while(!hasStepperReachedPosition());
+	while (!hasStepperReachedPosition())
+		;
 	delay(1000);
 	moveStepper(-200);
-	while(!hasStepperReachedPosition());
+	while (!hasStepperReachedPosition())
+		;
 	delay(1000);
 
 	// Example servo movements
 	moveServo(elbowServo, 0);  // Move elbow servo to 90 degrees
+	delay(1000);
 	moveServo(elbowServo, 90); // Move elbow servo to 90 degrees
 	delay(1000);
 	moveServo(shoulderServo, 0);  // Move shoulder servo to 45 degrees
+	delay(1000);
 	moveServo(shoulderServo, 90); // Move shoulder servo to 45 degrees
 	delay(1000);
 	moveServo(gripServo, 0);  // Close grip slightly (10 degrees)
+	delay(1000);
 	moveServo(gripServo, 90); // Close grip slightly (10 degrees)
 	delay(1000);
 }
