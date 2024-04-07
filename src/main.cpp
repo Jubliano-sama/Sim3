@@ -12,6 +12,9 @@ void loop() {
 
 void moveShoulderToFieldValue(int value) {
   
+
+  Serial.print("Attempting to move to value: ");
+  Serial.println(value);
   // Find value in list of values
   int position = -1;
 
