@@ -1,18 +1,35 @@
 #include <Arduino.h>
-
-// put function declarations here:
-int myFunction(int, int);
+#include "config.h"
+#include "motor.h"
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  setupMotors();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  testMotors();
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void moveShoulderToFieldValue(int value) {
+  
+  // Find value in list of values
+  int position = -1;
+
+  for(int i = 0; i < amountOfFieldValues; i++){
+    if(fieldValues[i] == value) position = i;
+  }
+  
+  if(position = -1){
+    Serial.println("value not found in list of values.");
+    return;
+  }
+
+  Serial.print("Value array index found: ");
+  Serial.println(position);
+
+  // Convert array index to angle
+  float angle = (float)position/(float)amountOfFieldValues * 360.0f;
+
+  // Now this function will handle the intricacies of moving to the position efficiently.
+  rotateShoulderAbsoluteAngle(angle);
 }

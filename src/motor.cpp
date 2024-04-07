@@ -134,6 +134,13 @@ void moveGripServo(int angle)
 	moveServo(gripServo, angle);
 }
 
+void moveWristServo(int angle)
+{
+	Serial.print("Moving wrist servo to angle: ");
+	Serial.println(angle);
+	moveServo(gripServo, angle);
+}
+
 void testMotors()
 {
 	// Example stepper motor usage
@@ -154,6 +161,10 @@ void testMotors()
 	moveServo(shoulderServo, 0);  // Move shoulder servo to 45 degrees
 	delay(1000);
 	moveServo(shoulderServo, 90); // Move shoulder servo to 45 degrees
+	delay(1000);
+	moveServo(wristServo, 0);  // Move shoulder servo to 45 degrees
+	delay(1000);
+	moveServo(wristServo, 90); // Move shoulder servo to 45 degrees
 	delay(1000);
 	moveServo(gripServo, 0);  // Close grip slightly (10 degrees)
 	delay(1000);
