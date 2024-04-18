@@ -4,71 +4,65 @@
 
 float convertFieldValueToAngle(int value);
 
+void moveToGrabbingPosition();
+void moveToRotatingPosition();
+void closeGrippers();
+void openGrippers();
+
 void setup() {
   Serial.begin(9600);
   setupMotors();
 }
 
 void loop() {
-  //Moves to first grabbing position
-  moveShoulderServo(20);
-  moveElbowServo(166);
-  moveWristServo(170);
-
-  // Grabs the object
+  moveToGrabbingPosition();
+  openGrippers();
   delay(1000);
-  moveGripServo(gripOpenAngle);
-  delay(2000);
-  moveGripServo(gripClosingAngle);
+  closeGrippers();
   delay(1000);
-
-  // Moves arm up so that it doesnt drag the object on the ground.
-  moveElbowServo(90);
-  delay(1000);
+  moveToRotatingPosition();
+  delay(100);
 
   // rotates to value 18
   rotateShoulderAbsoluteAngle(convertFieldValueToAngle(18));
-  delay(2000);
-
-  // Moves arm down to grabbing position.
-  moveShoulderServo(20);
-  moveElbowServo(166);
-  moveWristServo(170);
+  delay(1500);
+  moveToGrabbingPosition();
+  delay(1000);
+  openGrippers();
+  delay(1000);
+  closeGrippers();
   delay(1000);
 
-  //Lets go of the object and grabs again
-  moveGripServo(gripOpenAngle);
-  delay(1000);
-  moveGripServo(gripClosingAngle);
-  delay(2000);
-
-  // Moves arm up so that it doesnt drag the object on the ground.
-  moveElbowServo(90);
-  delay(500);
+  moveToRotatingPosition();
+  delay(100);
 
   // Rotates to field value 14
   rotateShoulderAbsoluteAngle(convertFieldValueToAngle(14));
   delay(1500);
+}
 
+void moveToGrabbingPosition(){
+  Serial.println("Moving to Grabbing Position");
+  
   // Moves arm down to grabbing position.
   moveShoulderServo(20);
   moveElbowServo(166);
   moveWristServo(170);
+}
 
-  // Lets go of the object and grabs again
-  delay(1000);
-  moveGripServo(gripOpenAngle);
-  delay(1000);
-  moveGripServo(gripClosingAngle);
-  delay(2000);
-
+void moveToRotatingPosition() {
+  Serial.println("Moving to Rotating position");
+  
   // Moves arm up so that it doesnt drag the object on the ground.
   moveElbowServo(90);
-  delay(500);
+}
 
-  // Rotates shoulder to field value 6
-  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(6));
-  delay(1500);
+void closeGrippers() {
+  moveGripServo(gripClosingAngle);
+}
+
+void dropObject() {
+  moveGripServo(gripClosingAngle);
 }
 
 float convertFieldValueToAngle(int value) {
