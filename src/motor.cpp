@@ -1,9 +1,14 @@
-#include "motor.h"
 #include "config.h"
+#include "motor.h"
 #include <TimerOne.h>
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper = NULL;
+
+Servo shoulderServo;
+Servo elbowServo;
+Servo wristServo;
+Servo gripServo;
 
 void setupMotors();
 void moveStepper(int steps);
@@ -12,6 +17,7 @@ void rotateShoulderAbsoluteAngle(float angle);
 float positionToAngle(int position);
 int angleToSteps(float angle);
 void testMotors();
+void moveWristServo(int angle);
 
 void setupMotors()
 {
@@ -28,6 +34,7 @@ void setupMotors()
 	elbowServo.attach(ELBOW_SERVO_PIN);
 	shoulderServo.attach(SHOULDER_SERVO_PIN);
 	gripServo.attach(GRIP_SERVO_PIN);
+	wristServo.attach(WRIST_SERVO_PIN);
 }
 
 void moveStepper(int steps)
@@ -107,7 +114,7 @@ int angleToSteps(float angle)
 	return static_cast<int>(round(stepsNormalized));
 }
 
-void moveServo(PWMServo servo, int angle)
+void moveServo(Servo servo, int angle)
 {
 	servo.write(angle);
 }
@@ -115,7 +122,7 @@ void moveServo(PWMServo servo, int angle)
 // Directly control each servo without using enum
 void moveElbowServo(int angle)
 {
-	Serial.print("Moving shoulder servo to angle: ");
+	Serial.print("Moving elbow servo to angle: ");
 	Serial.println(angle);
 	moveServo(elbowServo, angle);
 }
@@ -138,7 +145,7 @@ void moveWristServo(int angle)
 {
 	Serial.print("Moving wrist servo to angle: ");
 	Serial.println(angle);
-	moveServo(gripServo, angle);
+	moveServo(wristServo, angle);
 }
 
 void testMotors()

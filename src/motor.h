@@ -1,15 +1,9 @@
-#pragma once
+#ifndef motorLoaded
+#define motorLoaded 1
 
 #include <FastAccelStepper.h>
 #include <Arduino.h>
-#include <PWMServo.h>
-
-// Servo objects
-PWMServo shoulderServo;
-PWMServo elbowServo;
-PWMServo wristServo;
-PWMServo gripServo;
-
+#include <Servo.h>
 
 void rotateShoulderAbsoluteAngle(float angle);
 bool hasStepperReachedPosition();
@@ -18,7 +12,10 @@ void stopShoulder();
 void setupMotors();
 void testMotors();
 
-void moveServo(PWMServo, int angle);
+void moveWristServo(int angle);
+void moveServo(Servo, int angle);
 void moveElbowServo(int angle);
 void moveShoulderServo(int angle);
 void moveGripServo(int angle);
+
+#endif
