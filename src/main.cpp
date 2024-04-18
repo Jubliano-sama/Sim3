@@ -2,7 +2,7 @@
 #include "config.h"
 #include "motor.h"
 
-void moveShoulderToFieldValue(int value);
+float convertFieldValueToAngle(int value);
 
 void setup() {
   Serial.begin(9600);
@@ -10,75 +10,68 @@ void setup() {
 }
 
 void loop() {
+  //Moves to first grabbing position
   moveShoulderServo(20);
   moveElbowServo(166);
   moveWristServo(170);
 
+  // Grabs the object
   delay(1000);
   moveGripServo(gripOpenAngle);
   delay(2000);
   moveGripServo(gripClosingAngle);
   delay(1000);
+
+  // Moves arm up so that it doesnt drag the object on the ground.
   moveElbowServo(90);
   delay(1000);
-  moveShoulderToFieldValue(18);
+
+  // rotates to value 18
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(18));
   delay(2000);
+
+  // Moves arm down to grabbing position.
   moveShoulderServo(20);
   moveElbowServo(166);
   moveWristServo(170);
   delay(1000);
+
+  //Lets go of the object and grabs again
   moveGripServo(gripOpenAngle);
   delay(1000);
   moveGripServo(gripClosingAngle);
   delay(2000);
+
+  // Moves arm up so that it doesnt drag the object on the ground.
   moveElbowServo(90);
   delay(500);
-  moveShoulderToFieldValue(14);
+
+  // Rotates to field value 14
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(14));
   delay(1500);
 
+  // Moves arm down to grabbing position.
   moveShoulderServo(20);
   moveElbowServo(166);
   moveWristServo(170);
-  delay(1000);
-  moveGripServo(gripOpenAngle);
-  delay(1000);
-  moveGripServo(gripClosingAngle);
-  delay(2000);
-  moveElbowServo(90);
-  delay(500);
-  moveShoulderToFieldValue(6);
-  delay(1500);
 
-    moveShoulderServo(20);
-  moveElbowServo(166);
-  moveWristServo(170);
+  // Lets go of the object and grabs again
   delay(1000);
   moveGripServo(gripOpenAngle);
   delay(1000);
   moveGripServo(gripClosingAngle);
   delay(2000);
-  moveElbowServo(90);
-  delay(500);
-  moveShoulderToFieldValue(20);
-  delay(1500);
 
-    moveShoulderServo(20);
-  moveElbowServo(166);
-  moveWristServo(170);
-  delay(1000);
-  moveGripServo(gripOpenAngle);
-  delay(1000);
-  moveGripServo(gripClosingAngle);
-  delay(2000);
+  // Moves arm up so that it doesnt drag the object on the ground.
   moveElbowServo(90);
   delay(500);
-  moveShoulderToFieldValue(10);
+
+  // Rotates shoulder to field value 6
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(6));
   delay(1500);
 }
 
-void moveShoulderToFieldValue(int value) {
-  
-
+float convertFieldValueToAngle(int value) {
   Serial.print("Attempting to move to value: ");
   Serial.println(value);
   // Find value in list of values
@@ -90,7 +83,7 @@ void moveShoulderToFieldValue(int value) {
   
   if(position == -1){
     Serial.println("value not found in list of values.");
-    return;
+    return 0.0f;
   }
 
   Serial.print("Value array index found: ");
@@ -99,6 +92,5 @@ void moveShoulderToFieldValue(int value) {
   // Convert array index to angle
   float angle = (float)position/(float)amountOfFieldValues * 360.0f;
 
-  // Now this function will handle the intricacies of moving to the position efficiently.
-  rotateShoulderAbsoluteAngle(-angle + 9);
+  return -angle + 9;
 }
