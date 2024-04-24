@@ -8,10 +8,61 @@ void moveToGrabbingPosition();
 void moveToRotatingPosition();
 void closeGrippers();
 void openGrippers();
+void pushObjectToPreferredPosition();
 
 void setup() {
   Serial.begin(9600);
   setupMotors();
+  pushObjectToPreferredPosition();
+  delay(1000);
+  closeGrippers();
+  delay(500);
+  moveToRotatingPosition();
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(18));
+  delay(500);
+  moveToGrabbingPosition();
+  delay(1000);
+  openGrippers();
+  delay(500);
+  moveShoulderServo(70);
+  moveElbowServo(180);
+  moveWristServo(150);
+  delay(500);
+  rotateShoulderAbsoluteAngle(180);
+  delay(2000);
+  pushObjectToPreferredPosition();
+  delay(2000);
+  openGrippers();
+  delay(500);
+  closeGrippers();
+  delay(300);
+  moveToRotatingPosition();
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(20));
+  delay(1000);
+}
+
+void loop() {
+  moveToRotatingPosition();
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(20));
+  delay(500);
+  moveToGrabbingPosition();
+  delay(500);
+  openGrippers();
+  delay(300);
+  closeGrippers();
+  delay(300);
+  moveToRotatingPosition();
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(14));
+  delay(500);
+  moveToGrabbingPosition();
+  delay(500);
+  openGrippers();
+  delay(300);
+  closeGrippers();
+  delay(500);
+}
+
+void pushObjectToPreferredPosition(){
   moveToGrabbingPosition();
   openGrippers();
   moveElbowServo(180);
@@ -21,33 +72,7 @@ void setup() {
     moveElbowServo(180-((44*i)/100));
   }
   moveToGrabbingPosition();
-  delay(1000);
-  delay(500);
-  closeGrippers();
-  delay(500);
 }
-
-void loop() {
-  moveToRotatingPosition();
-  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(16));
-  delay(500);
-  moveToGrabbingPosition();
-  delay(1000);
-  openGrippers();
-  delay(500);
-  closeGrippers();
-  delay(300);
-  moveToRotatingPosition();
-  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(18));
-  delay(500);
-  moveToGrabbingPosition();
-  delay(1000);
-  openGrippers();
-  delay(500);
-  closeGrippers();
-  delay(500);
-}
-
 
 void moveToGrabbingPosition(){
   Serial.println("Moving to Grabbing Position");
