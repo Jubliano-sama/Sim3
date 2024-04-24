@@ -12,57 +12,64 @@ void openGrippers();
 void setup() {
   Serial.begin(9600);
   setupMotors();
+  moveToGrabbingPosition();
+  openGrippers();
+  moveElbowServo(180);
+  delay(1000);
+  for(int i = 0; i<=100; i++){
+    delay(10);
+    moveElbowServo(180-((44*i)/100));
+  }
+  moveToGrabbingPosition();
+  delay(1000);
+  delay(500);
+  closeGrippers();
+  delay(500);
 }
 
 void loop() {
-  moveToGrabbingPosition();
-  openGrippers();
-  delay(1000);
-  closeGrippers();
-  delay(1000);
   moveToRotatingPosition();
-  delay(100);
-
-  // rotates to value 18
+  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(16));
+  delay(500);
+  moveToGrabbingPosition();
+  delay(1000);
+  openGrippers();
+  delay(500);
+  closeGrippers();
+  delay(300);
+  moveToRotatingPosition();
   rotateShoulderAbsoluteAngle(convertFieldValueToAngle(18));
-  delay(1500);
+  delay(500);
   moveToGrabbingPosition();
   delay(1000);
   openGrippers();
-  delay(1000);
+  delay(500);
   closeGrippers();
-  delay(1000);
-
-  moveToRotatingPosition();
-  delay(100);
-
-  // Rotates to field value 14
-  rotateShoulderAbsoluteAngle(convertFieldValueToAngle(14));
-  delay(1500);
+  delay(500);
 }
+
 
 void moveToGrabbingPosition(){
   Serial.println("Moving to Grabbing Position");
   
   // Moves arm down to grabbing position.
-  moveShoulderServo(20);
-  moveElbowServo(166);
+  moveShoulderServo(10);
+  moveElbowServo(136);
   moveWristServo(170);
 }
 
+// Moves arm up so that it doesnt drag the object on the ground.
 void moveToRotatingPosition() {
   Serial.println("Moving to Rotating position");
-  
-  // Moves arm up so that it doesnt drag the object on the ground.
-  moveElbowServo(90);
+  moveShoulderServo(20);
 }
 
 void closeGrippers() {
   moveGripServo(gripClosingAngle);
 }
 
-void dropObject() {
-  moveGripServo(gripClosingAngle);
+void openGrippers() {
+  moveGripServo(gripOpenAngle);
 }
 
 float convertFieldValueToAngle(int value) {
@@ -74,7 +81,7 @@ float convertFieldValueToAngle(int value) {
   for(int i = 0; i < amountOfFieldValues; i++){
     if(fieldValues[i] == value) position = i;
   }
-  
+
   if(position == -1){
     Serial.println("value not found in list of values.");
     return 0.0f;
@@ -85,6 +92,5 @@ float convertFieldValueToAngle(int value) {
 
   // Convert array index to angle
   float angle = (float)position/(float)amountOfFieldValues * 360.0f;
-
-  return -angle + 9;
+  return -angle;
 }

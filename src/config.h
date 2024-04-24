@@ -12,13 +12,13 @@ const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder r
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
 
-const int gripClosingAngle = 115;
-const int gripOpenAngle = 60;
+const int gripClosingAngle = 110;
+const int gripOpenAngle = 30;
 
 // Servo control pins MAKE SURE THESE ARE PWM PINS
 #define ELBOW_SERVO_PIN 9
 #define SHOULDER_SERVO_PIN 10
-#define GRIP_SERVO_PIN A7
+#define GRIP_SERVO_PIN A5
 #define WRIST_SERVO_PIN 12
 
 // field values going clockwise from starting position
