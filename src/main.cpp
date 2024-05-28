@@ -104,9 +104,8 @@ double pidControl(const double setpoint, const double input, const double Kp, co
 	// Calculate integral term
 	static double integral = 0.0;
 	integral += error * dt;
-	integral = constrain(integral, -0.25 / Ki, 0.25 / Ki);
 	double integralTerm = Ki * integral;
-
+	integralTerm = constrain(integralTerm, -1, 1);
 	// Calculate derivative term
 	double derivative = (error - lastError) / dt;
 	double derivativeTerm = Kd * derivative;
