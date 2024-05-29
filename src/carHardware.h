@@ -1,5 +1,5 @@
 #pragma once
-
+#include <Arduino.h>
 // 0 = No Debug, 1 = Only special cases(pause,stop,overshoot), 2 = everyhting
 #define DEBUG 2
 
@@ -21,10 +21,11 @@ const int motorsForwardPins[]={50,48,47,45};
 const int motorsENAPins[]={3,4,6,5};
 const int stopPauseDelay = 700;
 
-
 extern int lastDirection;
 
-void setupBasicFunctions();
-void driveMotors(double left, double right);
-double mapDouble(double x, double inMin, double inMax, double outMin, double outMax);
-bool* getAnalogSensorValues();
+namespace car {
+    void setupCarHardware();
+    void driveMotors(double left, double right);
+    double mapDouble(double x, double inMin, double inMax, double outMin, double outMax);
+    bool* getAnalogSensorValues();
+}
