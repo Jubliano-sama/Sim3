@@ -1,6 +1,5 @@
 #include "config.h"
 #include "motor.h"
-#include <TimerOne.h>
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper = NULL;
@@ -51,6 +50,15 @@ void stopShoulder()
 	stepper->stopMove();
 }
 
+float getShoulderAngle(){
+	return positionToAngle(stepper->getCurrentPosition());
+}
+
+void rotateShoulderRelativeAngle(float angle){
+	Serial.print("Rotating shoulder to relative angle: ");
+	Serial.println(angle);
+	moveStepper(angleToSteps(angle));
+}
 // assume we start at angle 0
 void rotateShoulderAbsoluteAngle(float angle)
 {
