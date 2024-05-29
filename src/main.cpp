@@ -79,7 +79,7 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
     return value; // Return calculated value
 }
 
-double pidControl(const double setpoint, const double input, const double Kp, const double Ki, const double Kd)
+double pidControl(const double desiredValue, const double actualValue, const double Kp, const double Ki, const double Kd)
 {
     // Store the old time
     static unsigned long prevTime = 0;
@@ -96,7 +96,7 @@ double pidControl(const double setpoint, const double input, const double Kp, co
         return 0;
     }
     // Calculate error
-    double error = setpoint - input;
+    double error = desiredValue - actualValue;
 
     // Calculate proportional term
     double proportional = error * Kp;
