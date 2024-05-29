@@ -1,5 +1,6 @@
 #include "config.h"
 #include "motor.h"
+#include "config.h"
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper = NULL;
@@ -17,6 +18,7 @@ float positionToAngle(int position);
 int angleToSteps(float angle);
 void testMotors();
 void moveWristServo(int angle);
+void moveToArmConfiguration(ArmConfiguration configuration);
 
 void setupMotors()
 {
@@ -154,6 +156,12 @@ void moveWristServo(int angle)
 	Serial.print("Moving wrist servo to angle: ");
 	Serial.println(angle);
 	moveServo(wristServo, angle);
+}
+
+void moveToArmConfiguration(ArmConfiguration configuration) {
+	moveShoulderServo(configuration.shoulderAngle);
+	moveElbowServo(configuration.elbowAngle);
+	moveWristServo(configuration.wristAngle);
 }
 
 void testMotors()

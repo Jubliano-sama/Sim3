@@ -2,7 +2,7 @@
 #include "carHardware.h"
 
 // Function prototypes
-double pidControl(double setpoint, double input, double Kp, double Ki, double Kd);
+double calculatePID(double setpoint, double input, double Kp, double Ki, double Kd);
 int calculateWeightedArraySum(const bool array[], int arrSize);
 double *calculateMotorInput(double pidOutput);
 bool isAllZero(bool *arr, int arrSize);
@@ -23,8 +23,6 @@ void setup()
 
 void loop()
 {
-    //car::driveMotors(0,0);
-    //delay(500);
     if (!digitalRead(switchPin))
     {
         car::driveMotors(0, 0);
@@ -48,7 +46,7 @@ void loop()
     // no special case was found: using normal PID control
     bool* sensorValues = car::getAnalogSensorValues();
     
-    double pid = pidControl(0, calculateWeightedArraySum(sensorValues, analogSensorsCount), Kp, Ki, Kd);
+    double pid = calculatePID(0, calculateWeightedArraySum(sensorValues, analogSensorsCount), Kp, Ki, Kd);
     double *motorInput;
     motorInput = calculateMotorInput(pid);
     #if DEBUG >= 2
@@ -79,7 +77,7 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
     return value; // Return calculated value
 }
 
-double pidControl(const double desiredValue, const double actualValue, const double Kp, const double Ki, const double Kd)
+double calculatePID(const double desiredValue, const double actualValue, const double Kp, const double Ki, const double Kd)
 {
     // Store the old time
     static unsigned long prevTime = 0;
