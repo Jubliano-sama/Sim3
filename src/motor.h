@@ -1,8 +1,4 @@
 #pragma once
-
-#define motorLoaded
-#define motorLoaded 1
-
 #include <FastAccelStepper.h>
 #include <Arduino.h>
 #include <Servo.h>

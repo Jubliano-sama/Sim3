@@ -20,6 +20,7 @@ const int motorsBackwardPins[]={51,49,46,44}; //{lv,la,rv,ra}
 const int motorsForwardPins[]={50,48,47,45};
 const int motorsENAPins[]={3,4,6,5};
 const int stopPauseDelay = 700;
+const int beginPauseDriveForwardTime = 500;
 
 extern int lastDirection;
 

@@ -39,6 +39,7 @@ const ArmConfiguration scanningPosition(90, 90, 90);
 const ArmConfiguration carryingPosition(90, 90, 90);
 const ArmConfiguration placingPosition(90, 90, 90);
 const ArmConfiguration grabbingPosition(90, 90, 90);
+const ArmConfiguration pushingObjectPosition(90, 90, 90);
 
 // field values going clockwise from starting position
 const int fieldValues[] = {0, -1, 2, -9, 12, -15, 20, -21, 14, -17, 6, -7, 0, -3, 4, -11, 10, -13, 18, -22, 16, -19, 8, -5};
