@@ -9,7 +9,7 @@ enum State
     STATE_DRIVING,
     STATE_PAUSE_BEGIN,
     STATE_SCAN_FIELD,
-    STATE_MOVE_OBJECTS,
+    STATE_MOVE_OBJECT,
     STATE_END_PAUSE,
     STATE_OVERSHOOT,
     STATE_SWITCHPIN_OFF,
@@ -20,7 +20,7 @@ enum State
 State currentState = STATE_INITIALIZATION;
 
 int pauseCounter = 0;
-int *objectsAngles;
+float objectAngle;
 
 bool isAllZero(bool *arr, int arrSize)
 {
@@ -241,11 +241,10 @@ void driveCar()
     car::driveMotors(motorInput[0], motorInput[1]);
 }
 
-int *scanField()
+float scanForObject()
 {
-    static int objectPositions[2] = {-1, -1};
     setStepperSpeed(scanningSpeed);
-    // Will keep turn for 1 round
+    // Will keep turning for 1 couterclockwise round
     rotateShoulderRelativeAngle(-360);
 
     int numberOfObjectsFound = 0;
@@ -253,36 +252,41 @@ int *scanField()
     {
         if(!digitalRead(switchPin)){
             currentState = STATE_SWITCHPIN_OFF;
-            return objectPositions;
+            return -1;
         }
         if (digitalRead(objectDetectionPin))
         {
-            if (numberOfObjectsFound < 2)
-            {
-                objectPositions[numberOfObjectsFound] = int(getShoulderAngle() - 10);
-                numberOfObjectsFound++;
-            }
-            else
-            {
-                Serial.print("ERROR: MORE THAN TWO OBJECTS DETECTED");
-            }
+            float currentAngle = getShoulderAngle();
+            stopShoulder();
+            return currentAngle;
         }
     }
     setStepperSpeed(stepperMaxSpeed);
-    return objectPositions;
+    return -1.0f;
 }
 
 
-void moveObjects(){
+void moveObject(){
     moveToArmConfiguration(carryingPosition);
-    rotateShoulderAbsoluteAngle((float)objectsAngles[0]);
+    rotateShoulderAbsoluteAngle(objectAngle);
     
     // Safely waits(switchpin proof) until arm has probably reached positions, tuning needed
     if(!safeWait(500)) return;
 
+    // grab object
     pushObjectToPreferredPosition();
     closeGrippers();
     if(!safeWait(500)) return;
+
+    //Move 180 degrees and place object
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(500)) return;
+    rotateShoulderRelativeAngle(180);
+    if(!safeWait(1000)) return;
+    moveToArmConfiguration(placingPosition);
+    if(!safeWait(500)) return;
+    openGrippers();
+    moveToArmConfiguration(carryingPosition);
 }
 
 void pauseBegin()
@@ -351,10 +355,13 @@ void updateStateMachine()
         currentState = STATE_SCAN_FIELD;
         break;
     case STATE_SCAN_FIELD:
-        objectsAngles = scanField();
+        objectAngle = scanForObject();
+        Serial.println("Object found at: ");
+        Serial.print(objectAngle);
+        currentState = STATE_MOVE_OBJECT;
         break;
-    case STATE_MOVE_OBJECTS:
-        moveObjects();
+    case STATE_MOVE_OBJECT:
+        moveObject();
         currentState = STATE_END_PAUSE;
         break;
     case STATE_END_PAUSE:
