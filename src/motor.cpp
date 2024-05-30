@@ -59,7 +59,7 @@ float getShoulderAngle(){
 void rotateShoulderRelativeAngle(float angle){
 	Serial.print("Rotating shoulder to relative angle: ");
 	Serial.println(angle);
-	moveStepper(angleToSteps(angle));
+	moveStepper(static_cast<int>((angle / 360.0f) * shoulderRotationSteps));
 }
 // assume we start at angle 0
 void rotateShoulderAbsoluteAngle(float angle)

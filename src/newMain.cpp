@@ -243,11 +243,33 @@ void driveCar()
 
 float scanForObject()
 {
+    static int angleScanned = 0;
+    
     setStepperSpeed(scanningSpeed);
-    // Will keep turning for 1 couterclockwise round
-    rotateShoulderRelativeAngle(-360);
+    // Move to position that cant hit an object
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(500)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+    closeGrippers();
+    
+    // Rotate to where we left off scanning last time.
+    rotateShoulderAbsoluteAngle(angleScanned);
+    // Wait to reach position safely.
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
 
-    int numberOfObjectsFound = 0;
+    moveToArmConfiguration(scanningPosition);
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+    // Will keep turning for 1 counterclockwise round
+    rotateShoulderRelativeAngle(-360+angleScanned);
+
     while (!hasStepperReachedPosition())
     {
         if(!digitalRead(switchPin)){
@@ -257,6 +279,7 @@ float scanForObject()
         if (digitalRead(objectDetectionPin))
         {
             float currentAngle = getShoulderAngle();
+            angleScanned = currentAngle;
             stopShoulder();
             return currentAngle;
         }
