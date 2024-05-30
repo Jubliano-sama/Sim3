@@ -19,72 +19,7 @@ enum State {
 State currentState = STATE_INITIALIZATION;
 
 int pauseCounter = 0;
-int ObjectsAngles[] = {-1,-1};
-
-void setup() {
-    // Initialization code
-    car::setupCarHardware();
-    setupMotors();
-    currentState = STATE_DRIVING;
-}
-
-void updateStateMachine() {
-    switch (currentState) {
-        case STATE_INITIALIZATION:
-            Serial.println("ILLEGAL STATE: STATE INITIALIZATION");
-            break;
-        case STATE_DRIVING:
-            if (!digitalRead(switchPin)){
-                currentState = STATE_SWITCHPIN_OFF;
-                return;
-            }
-            if(checkOvershoot){
-                currentState=STATE_OVERSHOOT;
-                break;
-            }
-            if(checkStopPauseSign){
-                if(pauseCounter >=1){
-                    Serial.println("Stop sign detected");
-                    currentState=STATE_STOPPED;
-                    break;
-                } 
-                currentState=STATE_PAUSE_BEGIN;
-                Serial.println("Pause sign detected");
-                break;
-            }
-            driveCar();
-            break;
-        case STATE_PAUSE_BEGIN:
-            pauseBegin();
-            currentState = STATE_SCAN_FIELD;
-            break;
-        case STATE_SCAN_FIELD:
-            scanField();
-            break;
-        case STATE_MOVE_OBJECTS:
-            moveObjects();
-            currentState = STATE_END_PAUSE;
-            break;
-        case STATE_END_PAUSE:
-            endPause();
-            currentState = STATE_DRIVING;
-            break;
-        case STATE_OVERSHOOT:
-            handleOvershoot();
-            currentState = STATE_DRIVING;
-            break;
-        case STATE_SWITCHPIN_OFF:
-            Serial.println("Switchpin off");
-            car::driveMotors(0, 0);
-            delay(500);
-            // if switchpin is turned on, return to driving state
-            if(digitalRead(switchPin)) currentState = STATE_DRIVING;
-            break;
-        default:
-            // Default case should not be reached
-            break;
-    }
-}
+int* objectsAngles;
 
 bool isAllZero(bool *arr, int arrSize)
 {
@@ -286,4 +221,90 @@ void driveCar(){
     Serial.println(pid);
 
     car::driveMotors(motorInput[0], motorInput[1]);
+}
+
+int* scanField(){
+    static int objectPositions[2] = {-1, -1};
+    setStepperSpeed(scanningSpeed);
+    // Will keep turn for 1 round 
+    rotateShoulderRelativeAngle(-360);
+    
+    int numberOfObjectsFound = 0; 
+    while(!hasStepperReachedPosition){
+        if(digitalRead(objectDetectionPin)){
+            if (numberOfObjectsFound < 2){
+                objectPositions[numberOfObjectsFound] = int(getShoulderAngle() - 10);
+                numberOfObjectsFound++;
+            } else {
+                Serial.print("ERROR: MORE THAN TWO OBJECTS DETECTED")
+            }
+        }
+    }   
+    setStepperSpeed(stepperMaxSpeed);
+    return objectPositions;
+}
+
+void setup() {
+    // Initialization code
+    car::setupCarHardware();
+    setupMotors();
+    currentState = STATE_DRIVING;
+}
+
+void updateStateMachine() {
+    switch (currentState) {
+        case STATE_INITIALIZATION:
+            Serial.println("ILLEGAL STATE: STATE INITIALIZATION");
+            break;
+        case STATE_DRIVING:
+            if (!digitalRead(switchPin)){
+                currentState = STATE_SWITCHPIN_OFF;
+                return;
+            }
+            if(checkOvershoot){
+                currentState=STATE_OVERSHOOT;
+                break;
+            }
+            if(checkStopPauseSign){
+                if(pauseCounter >=1){
+                    Serial.println("Stop sign detected");
+                    currentState=STATE_STOPPED;
+                    break;
+                } 
+                currentState=STATE_PAUSE_BEGIN;
+                Serial.println("Pause sign detected");
+                break;
+            }
+            driveCar();
+            break;
+        case STATE_PAUSE_BEGIN:
+            pauseBegin();
+            currentState = STATE_SCAN_FIELD;
+            break;
+        case STATE_SCAN_FIELD:
+            objectsAngles = scanField();
+            break;
+        case STATE_MOVE_OBJECTS:
+            moveObjects();
+            currentState = STATE_END_PAUSE;
+            break;
+        case STATE_END_PAUSE:
+            endPause();
+            currentState = STATE_DRIVING;
+            break;
+        case STATE_OVERSHOOT:
+            handleOvershoot();
+            currentState = STATE_DRIVING;
+            break;
+        case STATE_SWITCHPIN_OFF:
+            Serial.println("Switchpin off");
+            car::driveMotors(0, 0);
+            delay(500);
+            // if switchpin is turned on, return to driving state
+            if(digitalRead(switchPin)) currentState = STATE_DRIVING;
+            break;
+        default:
+            // Default case should not be reached
+            break;
+    }
 }

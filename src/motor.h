@@ -16,6 +16,7 @@ void setupMotors();
 void testMotors();
 void rotateShoulderRelativeAngle(float angle);
 float getShoulderAngle();
+void setStepperSpeed(int stepsPerSecond);
 
 void moveWristServo(int angle);
 void moveServo(Servo, int angle);

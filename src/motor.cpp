@@ -164,6 +164,10 @@ void moveToArmConfiguration(ArmConfiguration configuration) {
 	moveWristServo(configuration.wristAngle);
 }
 
+void setStepperSpeed(int stepsPerSecond){
+	stepper->setSpeedInHz(stepsPerSecond);
+}
+
 void testMotors()
 {
 	// Example stepper motor usage

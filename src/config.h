@@ -2,11 +2,14 @@
 
 #include <Arduino.h>
 
+
 // Define motor interface type and pins used for the A4988 driver
 #define motorInterfaceType 1
 #define dirPin A0
 #define stepPin 8 // 6 7 or 8!!
 
+// TODO SET THIS PIN
+const int objectDetectionPin = 1;
 
 #define ELBOW_SERVO_PIN 9
 #define SHOULDER_SERVO_PIN 10
@@ -18,6 +21,7 @@ const int stepperMaxSpeed = 5000;
 const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
+const int scanningSpeed = shoulderRotationSteps / 10; // Scanning takes 10 seconds
 
 struct ArmConfiguration {
     int shoulderAngle;
