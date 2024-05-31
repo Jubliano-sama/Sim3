@@ -6,8 +6,8 @@
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
 #define SCANNING_OFFSET_ANGLE 15
-#define GRIP_CLOSING_ANGLE
-#define GRIP_OPEN_ANGLE
+#define GRIP_CLOSING_ANGLE 60
+#define GRIP_OPEN_ANGLE 135
 
 struct ArmConfiguration {
     int shoulderAngle;
