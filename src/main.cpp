@@ -8,19 +8,18 @@ enum State
     STATE_INITIALIZATION,
     STATE_DRIVING,
     STATE_PAUSE_BEGIN,
-    STATE_SCAN_FIELD,
     STATE_MOVE_OBJECT,
     STATE_END_PAUSE,
     STATE_OVERSHOOT,
     STATE_SWITCHPIN_OFF,
-    STATE_STOPPED
+    STATE_STOPPED,
+    STATE_FIELD_OBJECT_ROUTINE
 };
 
 // Current state
 State currentState = STATE_INITIALIZATION;
 
 int pauseCounter = 0;
-float objectAngle;
 
 bool isAllZero(bool *arr, int arrSize)
 {
@@ -101,7 +100,7 @@ void pushObjectToPreferredPosition()
 {
     moveToArmConfiguration(pushingObjectPosition);
     openGrippers();
-    delay(1000);
+    if(!safeWait(3000)) return;
 
     // Slowly move forward to account for all object placings
     for (int i = 0; i <= 100; i++)
@@ -337,28 +336,30 @@ float scanForObject(float lastObjectPlacedAngle = 0)
 }
 
 
-void moveObject(){
-    Serial.println("Moving Object");
-    moveToArmConfiguration(carryingPosition);
-    rotateShoulderAbsoluteAngle(objectAngle);
-    
-    // Safely waits(switchpin proof) until arm has probably reached positions, tuning needed
-    if(!safeWait(500)) return;
+void moveObject(float objectAngle, float destinationAngle){
+    Serial.print("Moving Object from");
+    Serial.print(objectAngle);
+    Serial.print(" to ");
+    Serial.println(destinationAngle);
 
-    // grab object
-    pushObjectToPreferredPosition();
-    closeGrippers();
-    if(!safeWait(500)) return;
-
-    //Move 180 degrees and place object
-    moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) return;
-    rotateShoulderRelativeAngle(180);
-    if(!safeWait(1000)) return;
-    moveToArmConfiguration(placingPosition);
-    if(!safeWait(500)) return;
+    // First get to safe position    
     openGrippers();
     moveToArmConfiguration(carryingPosition);
+    if(!safeWait(1000)) return;
+
+    rotateShoulderAbsoluteAngle(objectAngle);
+    if(!safeWaitUntilStepperStopped()) return;
+    pushObjectToPreferredPosition();
+    if(!safeWait(1000)) return;
+    closeGrippers();
+
+    // Move to destination
+    rotateShoulderAbsoluteAngle(destinationAngle);
+    if(!safeWaitUntilStepperStopped()) return;
+    moveToArmConfiguration(placingPosition);
+    if(!safeWait(1000)) return;
+    openGrippers();
+    if(!safeWait(500)) return;
 }
 
 void pauseBegin()
@@ -391,6 +392,49 @@ void endPause()
     }
 }
 
+void moveToHome(){
+    // return to home
+    openGrippers();
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(1000)){
+        return;
+    }
+    rotateShoulderAbsoluteAngle(0);
+    if(!safeWaitUntilStepperStopped()){
+        return;
+    }
+    moveToArmConfiguration(homePosition);
+    if(!safeWait(500)) return;
+}
+
+void fieldObjectRoutine(){
+    float objectAngle1 = scanForObject(0); // First scan the field
+    if (objectAngle1 < 0.0f){
+        Serial.println("No objects found, returning");
+        return;
+    }
+    // Displace first object by 180 degrees
+    moveObject(objectAngle1, objectAngle1+180);
+    moveToHome();
+    // Wait 3 seconds
+    if(!safeWait(3000)){
+        return;
+    }
+
+    float objectAngle2 = scanForObject(objectAngle1); // Scan the field for the second object
+    if (objectAngle2 < 0.0f){
+        Serial.println("No objects found, returning");
+        return;
+    }
+    // Displace second object by 180 degrees
+    moveObject(objectAngle2, objectAngle2+180);
+    moveToHome();
+    moveObject(objectAngle1, 0);
+    moveToHome();
+    if(!safeWait(3000)){
+        return;
+    }
+}
 
 void updateStateMachine()
 {   
@@ -426,16 +470,10 @@ void updateStateMachine()
         break;
     case STATE_PAUSE_BEGIN:
         pauseBegin();
-        currentState = STATE_SCAN_FIELD;
+        currentState = STATE_FIELD_OBJECT_ROUTINE;
         break;
-    case STATE_SCAN_FIELD:
-        objectAngle = scanForObject();
-        Serial.println("Object found at: ");
-        Serial.print(objectAngle);
-        currentState = STATE_MOVE_OBJECT;
-        break;
-    case STATE_MOVE_OBJECT:
-        moveObject();
+    case STATE_FIELD_OBJECT_ROUTINE:
+        fieldObjectRoutine();
         currentState = STATE_END_PAUSE;
         break;
     case STATE_END_PAUSE:

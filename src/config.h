@@ -17,5 +17,6 @@ const ArmConfiguration carryingPosition(90, 90, 90);
 const ArmConfiguration placingPosition(90, 90, 90);
 const ArmConfiguration grabbingPosition(90, 90, 90);
 const ArmConfiguration pushingObjectPosition(90, 90, 90);
+const ArmConfiguration homePosition(90, 90, 90);
 
 const int secondsPerFullScan = 20;
