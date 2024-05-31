@@ -252,6 +252,7 @@ float scanForObject()
     moveToArmConfiguration(carryingPosition);
     if(!safeWait(500)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
     closeGrippers();
@@ -261,12 +262,14 @@ float scanForObject()
     // Wait to reach position safely.
     if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
 
     moveToArmConfiguration(scanningPosition);
     if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
     // Will keep turning from where it last scanned, up to the last object found
@@ -276,6 +279,7 @@ float scanForObject()
     {
         if(!digitalRead(switchPin)){
             currentState = STATE_SWITCHPIN_OFF;
+            setStepperSpeed(stepperMaxSpeed);
             return -1;
         }
         if (digitalRead(objectDetectionPin))
@@ -288,6 +292,7 @@ float scanForObject()
                 lastObjectPlace += 360.0f;
             }
             stopShoulder();
+            setStepperSpeed(stepperMaxSpeed);
             return currentAngle;
         }
     }
@@ -298,38 +303,45 @@ float scanForObject()
     moveToArmConfiguration(carryingPosition);
     if(!safeWait(500)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
     rotateShoulderAbsoluteAngle(0);
     // Wait to reach position safely.
     if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
 
     moveToArmConfiguration(scanningPosition);
     if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
+        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
 
-    rotateShoulderRelativeAngle(lastObjectPlace-9);
+    // move until halfway into furthest spot next object could be
+    rotateShoulderRelativeAngle(lastObjectPlace-27);
 
     while (!hasStepperReachedPosition())
     {
         if(!digitalRead(switchPin)){
             currentState = STATE_SWITCHPIN_OFF;
+            setStepperSpeed(stepperMaxSpeed);
             return -1;
         }
         if (digitalRead(objectDetectionPin))
         {
             float currentAngle = getShoulderAngle();
             stopShoulder();
+            setStepperSpeed(stepperMaxSpeed);
             return currentAngle;
         }
     }
 
     setStepperSpeed(stepperMaxSpeed);
+    Serial.println("ERROR: NO OBJECTS FOUND");
     return -1.0f;
 }
 
