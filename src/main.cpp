@@ -282,7 +282,7 @@ float scanForObject()
             setStepperSpeed(stepperMaxSpeed);
             return -1;
         }
-        if (digitalRead(objectDetectionPin))
+        if (digitalRead(OBJECT_DETECTION_PIN))
         {
             float currentAngle = getShoulderAngle();
             angleScanned = currentAngle;
@@ -293,7 +293,7 @@ float scanForObject()
             }
             stopShoulder();
             setStepperSpeed(stepperMaxSpeed);
-            return currentAngle;
+            return currentAngle - SCANNING_OFFSET_ANGLE;
         }
     }
 
@@ -331,12 +331,12 @@ float scanForObject()
             setStepperSpeed(stepperMaxSpeed);
             return -1;
         }
-        if (digitalRead(objectDetectionPin))
+        if (digitalRead(OBJECT_DETECTION_PIN))
         {
             float currentAngle = getShoulderAngle();
             stopShoulder();
             setStepperSpeed(stepperMaxSpeed);
-            return currentAngle;
+            return currentAngle + SCANNING_OFFSET_ANGLE;
         }
     }
 
@@ -372,7 +372,7 @@ void moveObject(){
 
 void pauseBegin()
 {
-    Serial.println("Beginning pause"));
+    Serial.println("Beginning pause");
     int beginTime = millis();
     
     while((millis() - beginTime) < beginPauseDriveForwardTime){
