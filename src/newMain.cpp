@@ -352,7 +352,7 @@ void updateStateMachine()
         if (!digitalRead(switchPin))
         {
             currentState = STATE_SWITCHPIN_OFF;
-            return;
+            break;
         }
         if (checkOvershoot())
         {
