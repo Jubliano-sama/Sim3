@@ -89,12 +89,12 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
 void closeGrippers()
 {
-    moveGripServo(gripClosingAngle);
+    moveGripServo(GRIP_CLOSING_ANGLE);
 }
 
 void openGrippers()
 {
-    moveGripServo(gripOpenAngle);
+    moveGripServo(GRIP_OPEN_ANGLE);
 }
 
 void pushObjectToPreferredPosition()
@@ -250,7 +250,7 @@ float scanForObject()
     setStepperSpeed(scanningSpeed);
     // Move to position that cant hit an object
     moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) {
+    if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
         setStepperSpeed(stepperMaxSpeed);
         return -1;
@@ -301,7 +301,7 @@ float scanForObject()
     // Proceed by turning clockwise from home
 
     moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) {
+    if(!safeWait(1000)) {
         currentState = STATE_SWITCHPIN_OFF;
         setStepperSpeed(stepperMaxSpeed);
         return -1;

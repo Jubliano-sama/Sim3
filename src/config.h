@@ -6,6 +6,8 @@
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
 #define SCANNING_OFFSET_ANGLE 15
+#define GRIP_CLOSING_ANGLE
+#define GRIP_OPEN_ANGLE
 
 struct ArmConfiguration {
     int shoulderAngle;
@@ -15,8 +17,7 @@ struct ArmConfiguration {
     ArmConfiguration(float shoulder, float elbow, float wrist) : shoulderAngle(shoulder), elbowAngle(elbow), wristAngle(wrist) {}
 };
 
-const int gripClosingAngle = 110;
-const int gripOpenAngle = 30;
+
 
 // TODO Change for actual angles
 const ArmConfiguration scanningPosition(90, 90, 90);
