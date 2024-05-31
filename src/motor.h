@@ -18,7 +18,6 @@ const int stepperMaxSpeed = 5000;
 const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
-const int scanningSpeed = shoulderRotationSteps / 10; // Scanning takes 10 seconds
 
 void rotateShoulderAbsoluteAngle(float angle);
 bool hasStepperReachedPosition();

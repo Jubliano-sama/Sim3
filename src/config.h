@@ -6,6 +6,7 @@
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
 #define SCANNING_OFFSET_ANGLE 15
+#define SCANNING_TOLERANCE 6 // This value will be used to make sure we dont hit a object that has already been scanned
 #define GRIP_CLOSING_ANGLE 60
 #define GRIP_OPEN_ANGLE 135
 
@@ -26,3 +27,4 @@ const ArmConfiguration placingPosition(90, 90, 90);
 const ArmConfiguration grabbingPosition(90, 90, 90);
 const ArmConfiguration pushingObjectPosition(90, 90, 90);
 
+const int secondsPerFullScan = 20;
