@@ -1,59 +1,69 @@
 #include <Arduino.h>
+#include "config.h"
+#include "motor.h"
 #include "carHardware.h"
 
-// Function prototypes
-double calculatePID(double setpoint, double input, double Kp, double Ki, double Kd);
-int calculateWeightedArraySum(const bool array[], int arrSize);
-double *calculateMotorInput(double pidOutput);
-bool isAllZero(bool *arr, int arrSize);
-bool isAllOne(bool *arr, int arrSize);
-void handlePauseSign();
-bool handlePossibleStopPauseSign();
-int arrayBoolSum(bool *arr, int arrCount);
-bool checkOvershoot();
-void handleOvershoot();
-void (*resetFunc)(void) = 0;
-
-int lastBarsUpdateTime = 0;
-
-void setup()
+enum State
 {
-    car::setupCarHardware();
+    STATE_INITIALIZATION,
+    STATE_DRIVING,
+    STATE_PAUSE_BEGIN,
+    STATE_SCAN_FIELD,
+    STATE_MOVE_OBJECT,
+    STATE_END_PAUSE,
+    STATE_OVERSHOOT,
+    STATE_SWITCHPIN_OFF,
+    STATE_STOPPED
+};
+
+// Current state
+State currentState = STATE_INITIALIZATION;
+
+int pauseCounter = 0;
+float objectAngle;
+
+bool isAllZero(bool *arr, int arrSize)
+{
+    for (int i = 0; i < arrSize; i++)
+    {
+        if (arr[i] != 0)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
-void loop()
+bool isAllOne(bool *arr, int arrSize)
 {
-    if (!digitalRead(switchPin))
+    for (int i = 0; i < arrSize; i++)
     {
-        car::driveMotors(0, 0);
-        #if DEBUG >= 1
-        Serial.print("\nSwitchpin off");
-        delay(500);
-        #endif
-        return;
+        if (arr[i] != 1)
+        {
+            return false;
+        }
     }
+    return true;
+}
 
-    // check for special cases
-    if (handlePossibleStopPauseSign())
-        return;
-
-    if (checkOvershoot())
+bool safeWait(unsigned int millisToWait) {
+    unsigned int beginTime = millis();
+    while (millis() - beginTime < millisToWait) {
+        if (!digitalRead(switchPin)) {
+            currentState = STATE_SWITCHPIN_OFF;
+            return false;  // Indicate that the switch pin was toggled
+        }
+    }
+    return true;  // Indicate that the wait time elapsed without toggling
+}
+int arrayBoolSum(bool *arr, int arrCount)
+{
+    int count = 0;
+    for (int i = 0; i < arrCount; i++)
     {
-        handleOvershoot();
-        return;
+        count += (int)arr[i];
     }
-
-    // no special case was found: using normal PID control
-    bool* sensorValues = car::getAnalogSensorValues();
-    
-    double pid = calculatePID(0, calculateWeightedArraySum(sensorValues, analogSensorsCount), Kp, Ki, Kd);
-    double *motorInput;
-    motorInput = calculateMotorInput(pid);
-    #if DEBUG >= 2
-    Serial.print("\nPID output: ");
-    Serial.print(pid);
-    #endif
-    car::driveMotors(motorInput[0], motorInput[1]);
+    return count;
 }
 
 int calculateWeightedArraySum(const bool array[], int arrSize)
@@ -64,17 +74,50 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
     for (int i = 0; i < arrSize; i++)
     {
-        int arrayValue = array[i];             // Get array value at index i
+        int arrayValue = array[i];           // Get array value at index i
         int positionDelta = i - middleIndex; // Calculate position delta
 
         value += arrayValue * positionDelta; // Adjust result value
     }
 
-    #if DEBUG >= 2
+#if DEBUG >= 2
     Serial.print("\nWeighted sum: ");
     Serial.print(value);
-    #endif
+#endif
     return value; // Return calculated value
+}
+
+void closeGrippers()
+{
+    moveGripServo(gripClosingAngle);
+}
+
+void openGrippers()
+{
+    moveGripServo(gripOpenAngle);
+}
+
+void pushObjectToPreferredPosition()
+{
+    moveToArmConfiguration(pushingObjectPosition);
+    openGrippers();
+    delay(1000);
+
+    // Slowly move forward to account for all object placings
+    for (int i = 0; i <= 100; i++)
+    {
+        // Safety check
+        if (!digitalRead(switchPin))
+        {
+            currentState = STATE_SWITCHPIN_OFF;
+            return;
+        }
+
+        delay(10);
+        // Interpolate between pushing position and grabbing position
+        moveElbowServo(pushingObjectPosition.elbowAngle - (pushingObjectPosition.elbowAngle - grabbingPosition.elbowAngle)*i/100);
+    }
+    moveToArmConfiguration(grabbingPosition);
 }
 
 double calculatePID(const double desiredValue, const double actualValue, const double Kp, const double Ki, const double Kd)
@@ -125,86 +168,12 @@ double *calculateMotorInput(double pidOutput)
     // Clipping the pidOutput between -0.5 and 0.5
     pidOutput = constrain(pidOutput, -0.5, 0.5);
 
-    // Calculating the motor inputs based on the new linear relationships
+    // Calculating the motor inputs based on a linear relationship
     // and clipping them at a maximum of 1
     motorInputs[0] = min(-4 * pidOutput + 1, 1); // Left motor (non-dominant)
-    motorInputs[1] = min(4 * pidOutput + 1, 1);     // Right motor (non-dominant)
+    motorInputs[1] = min(4 * pidOutput + 1, 1);  // Right motor (non-dominant)
 
     return motorInputs;
-}
-
-bool handlePossibleStopPauseSign()
-{
-    if (!isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
-    {
-        return false;
-    }
-
-    #if DEBUG >= 1
-    Serial.print("\nStop or pause sign detected: investigating...");
-    #endif
-
-    unsigned long beginTime = millis();
-
-    // Checking for for pause sign
-    while ((millis() - beginTime) < stopPauseDelay)
-    {
-
-        // safety check, if switchpin is low immediately stop motors and return to main loop.
-        if (!digitalRead(switchPin))
-        {
-            car::driveMotors(0, 0);
-            return true;
-        }
-
-        car::driveMotors(0.3, 0.3);
-        if (arrayBoolSum(car::getAnalogSensorValues(), analogSensorsCount) <= 2)
-        {
-            #if DEBUG >= 1
-            Serial.print("\nPause sign detected!");
-            #endif
-            handlePauseSign();
-            return true;
-        }
-    }
-
-    // detected stop sign
-    #if DEBUG >= 1
-    Serial.print("\nStop sign detected!");
-    #endif
-    car::driveMotors(0, 0);
-    while (digitalRead(switchPin) == HIGH)
-    {
-        #if DEBUG >= 1
-        Serial.print("\nRobot reached stop sign, toggle switchpin to continue again");
-        delay(1000);
-        #endif
-    }
-    return true;
-}
-
-void handlePauseSign()
-{
-    car::driveMotors(0, 0);
-    delay(5000);
-
-    while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount) || isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
-    {
-        if (digitalRead(switchPin))
-        {
-            // move forward
-            car::driveMotors(1, 1);
-        }
-        else
-        {
-            // stop movement
-            #if DEBUG >= 1
-            Serial.print("Switchpin detected low");
-            #endif
-            car::driveMotors(0, 0);
-            return;
-        }
-    }
 }
 
 bool checkOvershoot()
@@ -214,22 +183,24 @@ bool checkOvershoot()
         return true;
     }
 
-    /*
-    if (readFrontIRSensor())
-    {
-      return false;
-    }
-    */
-
     return false;
+}
+
+bool checkStopPauseSign()
+{
+    if (!isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
+    {
+        return false;
+    }
+    return true;
 }
 
 void handleOvershoot()
 {
     double speed = 0.1;
-    #if DEBUG >= 1
+#if DEBUG >= 1
     Serial.print("\nDetected overshoot, handling it...");
-    #endif
+#endif
 
     double directionParsed = (double)lastDirection;
     while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount))
@@ -240,51 +211,259 @@ void handleOvershoot()
             car::driveMotors(0, 0);
             return;
         }
-        // turn in last direction we went in until overshoot is resolved
-        #if DEBUG >= 2
+// turn in last direction we went in until overshoot is resolved
+#if DEBUG >= 2
         Serial.print("Overshoot still detected... turning more");
-        #endif
-        if (speed < 0.5){
+#endif
+        if (speed < 0.5)
+        {
             speed += 0.1;
         }
         delay(10);
-        #if DEBUG >= 2
+#if DEBUG >= 2
         Serial.println(speed);
-        #endif
+#endif
         car::driveMotors(directionParsed * speed, -directionParsed * speed);
     }
 }
 
-int arrayBoolSum(bool *arr, int arrCount)
+void driveCar()
 {
-    int count = 0;
-    for (int i = 0; i < arrCount; i++)
-    {
-        count += (int)arr[i];
-    }
-    return count;
+
+    bool *sensorValues = car::getAnalogSensorValues();
+    double pid = calculatePID(0, calculateWeightedArraySum(sensorValues, analogSensorsCount), Kp, Ki, Kd);
+    double *motorInput;
+    motorInput = calculateMotorInput(pid);
+
+    Serial.print("\nPID output: ");
+    Serial.println(pid);
+
+    car::driveMotors(motorInput[0], motorInput[1]);
 }
 
-bool isAllZero(bool *arr, int arrSize)
+float scanForObject()
 {
-    for (int i = 0; i < arrSize; i++)
+    Serial.println("Starting scan");
+    static float angleScanned = 0;
+    static float lastObjectPlace = 0;
+
+    setStepperSpeed(scanningSpeed);
+    // Move to position that cant hit an object
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(500)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+    closeGrippers();
+    
+    // Rotate to where we left off scanning last time.
+    rotateShoulderAbsoluteAngle(angleScanned);
+    // Wait to reach position safely.
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+
+    moveToArmConfiguration(scanningPosition);
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+    // Will keep turning from where it last scanned, up to the last object found
+    rotateShoulderRelativeAngle(-360+angleScanned+lastObjectPlace+9);
+
+    while (!hasStepperReachedPosition())
     {
-        if (arr[i] != 0)
+        if(!digitalRead(switchPin)){
+            currentState = STATE_SWITCHPIN_OFF;
+            return -1;
+        }
+        if (digitalRead(objectDetectionPin))
         {
-            return false;
+            float currentAngle = getShoulderAngle();
+            angleScanned = currentAngle;
+            lastObjectPlace = currentAngle - 180;
+            // Ensure angle is positive
+            if (lastObjectPlace<0){
+                lastObjectPlace += 360.0f;
+            }
+            stopShoulder();
+            return currentAngle;
         }
     }
-    return true;
+
+    // Object couldnt be found turning counterclockwise.
+    // Proceed by turning clockwise from home
+
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(500)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+    rotateShoulderAbsoluteAngle(0);
+    // Wait to reach position safely.
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+
+    moveToArmConfiguration(scanningPosition);
+    if(!safeWait(1000)) {
+        currentState = STATE_SWITCHPIN_OFF;
+        return -1;
+    }
+
+    rotateShoulderRelativeAngle(lastObjectPlace-9);
+
+    while (!hasStepperReachedPosition())
+    {
+        if(!digitalRead(switchPin)){
+            currentState = STATE_SWITCHPIN_OFF;
+            return -1;
+        }
+        if (digitalRead(objectDetectionPin))
+        {
+            float currentAngle = getShoulderAngle();
+            stopShoulder();
+            return currentAngle;
+        }
+    }
+
+    setStepperSpeed(stepperMaxSpeed);
+    return -1.0f;
 }
 
-bool isAllOne(bool *arr, int arrSize)
-{
-    for (int i = 0; i < arrSize; i++)
-    {
-        if (arr[i] != 1)
-        {
-            return false;
-        }
-    }
-    return true;
+
+void moveObject(){
+    Serial.println("Moving Object");
+    moveToArmConfiguration(carryingPosition);
+    rotateShoulderAbsoluteAngle(objectAngle);
+    
+    // Safely waits(switchpin proof) until arm has probably reached positions, tuning needed
+    if(!safeWait(500)) return;
+
+    // grab object
+    pushObjectToPreferredPosition();
+    closeGrippers();
+    if(!safeWait(500)) return;
+
+    //Move 180 degrees and place object
+    moveToArmConfiguration(carryingPosition);
+    if(!safeWait(500)) return;
+    rotateShoulderRelativeAngle(180);
+    if(!safeWait(1000)) return;
+    moveToArmConfiguration(placingPosition);
+    if(!safeWait(500)) return;
+    openGrippers();
+    moveToArmConfiguration(carryingPosition);
 }
+
+void pauseBegin()
+{
+    Serial.println("Beginning pause"));
+    int beginTime = millis();
+    
+    while((millis() - beginTime) < beginPauseDriveForwardTime){
+        if (!digitalRead(switchPin)){
+            currentState = STATE_SWITCHPIN_OFF;
+            return;
+        }
+        car::driveMotors(0.4, 0.4);
+    }
+}
+
+void endPause()
+{
+    Serial.println("Ending pause");
+    // Move forward until line is found to avoid double pause
+    while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount) || isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
+    {
+        // safety check
+        if (!digitalRead(switchPin))
+        {
+            currentState = STATE_SWITCHPIN_OFF;
+            return;
+        }
+        car::driveMotors(1, 1);
+    }
+}
+
+
+void updateStateMachine()
+{   
+    switch (currentState)
+    {
+    case STATE_INITIALIZATION:
+        Serial.println("ILLEGAL STATE: STATE INITIALIZATION");
+        break;
+    case STATE_DRIVING:
+        if (!digitalRead(switchPin))
+        {
+            currentState = STATE_SWITCHPIN_OFF;
+            break;
+        }
+        if (checkOvershoot())
+        {
+            currentState = STATE_OVERSHOOT;
+            break;
+        }
+        if (checkStopPauseSign())
+        {
+            if (pauseCounter >= 1)
+            {
+                Serial.println("Stop sign detected");
+                currentState = STATE_STOPPED;
+                break;
+            }
+            currentState = STATE_PAUSE_BEGIN;
+            Serial.println("Pause sign detected");
+            break;
+        }
+        driveCar();
+        break;
+    case STATE_PAUSE_BEGIN:
+        pauseBegin();
+        currentState = STATE_SCAN_FIELD;
+        break;
+    case STATE_SCAN_FIELD:
+        objectAngle = scanForObject();
+        Serial.println("Object found at: ");
+        Serial.print(objectAngle);
+        currentState = STATE_MOVE_OBJECT;
+        break;
+    case STATE_MOVE_OBJECT:
+        moveObject();
+        currentState = STATE_END_PAUSE;
+        break;
+    case STATE_END_PAUSE:
+        endPause();
+        currentState = STATE_DRIVING;
+        break;
+    case STATE_OVERSHOOT:
+        handleOvershoot();
+        currentState = STATE_DRIVING;
+        break;
+    case STATE_SWITCHPIN_OFF:
+        Serial.println("Switchpin off");
+        car::driveMotors(0, 0);
+        delay(500);
+        // if switchpin is turned on, return to driving state
+        if (digitalRead(switchPin))
+            currentState = STATE_DRIVING;
+        break;
+    default:
+        // Default case should not be reached
+        break;
+    }
+}
+
+void setup()
+{
+    // Initialization code
+    car::setupCarHardware();
+    setupMotors();
+    currentState = STATE_DRIVING;
+}
+ void loop(){
+    updateStateMachine();
+ }
