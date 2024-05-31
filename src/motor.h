@@ -2,7 +2,6 @@
 #include <FastAccelStepper.h>
 #include <Arduino.h>
 #include <Servo.h>
-#include "config.h"
 
 // Define motor interface type and pins used for the A4988 driver
 #define DIR_PIN A0
@@ -18,6 +17,14 @@ const int stepperMaxSpeed = 5000;
 const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
+
+struct ArmConfiguration {
+    float shoulderAngle;
+    float elbowAngle;
+    float wristAngle;
+
+    ArmConfiguration(float shoulder, float elbow, float wrist) : shoulderAngle(shoulder), elbowAngle(elbow), wristAngle(wrist) {}
+};
 
 void rotateShoulderAbsoluteAngle(float angle);
 bool hasStepperReachedPosition();

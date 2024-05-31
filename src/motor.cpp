@@ -1,6 +1,4 @@
-#include "config.h"
 #include "motor.h"
-#include "config.h"
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper = NULL;

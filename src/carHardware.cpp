@@ -82,7 +82,7 @@ namespace car {
 
     int convertToPWM(double input)
     {
-        return (int)constrain(mapDouble(input, 0, 1, 0, 255), 0, 255);
+        return (int)mapDouble(input, 0, 1, 0, 255);
     }
 
     void driveMotors(double left, double right)

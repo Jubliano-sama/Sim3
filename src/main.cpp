@@ -264,7 +264,7 @@ float scanRange(float beginAngle, float endAngle){
 
     // Move to position that cant hit an object
     moveToArmConfiguration(carryingPosition);
-    if(safeWaitUntilStepperStopped()) {
+    if(!safeWaitUntilStepperStopped()) {
         currentState = STATE_SWITCHPIN_OFF;
         return -1;
     }
@@ -272,7 +272,7 @@ float scanRange(float beginAngle, float endAngle){
     
     rotateShoulderAbsoluteAngle(beginAngle);
     // Wait to reach position safely.
-    if(safeWaitUntilStepperStopped()) {
+    if(!safeWaitUntilStepperStopped()) {
         currentState = STATE_SWITCHPIN_OFF;
         return -1;
     }

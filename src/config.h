@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "motor.h"
 
 // TODO SET THIS PIN
 #define OBJECT_DETECTION_PIN 1
@@ -9,16 +10,6 @@
 #define SCANNING_TOLERANCE 6 // This value will be used to make sure we dont hit a object that has already been scanned
 #define GRIP_CLOSING_ANGLE 60
 #define GRIP_OPEN_ANGLE 135
-
-struct ArmConfiguration {
-    int shoulderAngle;
-    int elbowAngle;
-    int wristAngle;
-
-    ArmConfiguration(float shoulder, float elbow, float wrist) : shoulderAngle(shoulder), elbowAngle(elbow), wristAngle(wrist) {}
-};
-
-
 
 // TODO Change for actual angles
 const ArmConfiguration scanningPosition(90, 90, 90);
