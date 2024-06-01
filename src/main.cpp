@@ -421,6 +421,8 @@ void moveToHome()
 {
     // return to home
     openGrippers();
+    if (!safeWait(500))
+    return;
     moveToArmConfiguration(carryingPosition);
     if (!safeWait(1000))
     {
