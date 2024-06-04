@@ -1,6 +1,4 @@
-#include "config.h"
 #include "motor.h"
-#include "config.h"
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper = NULL;
@@ -23,10 +21,10 @@ void moveToArmConfiguration(ArmConfiguration configuration);
 void setupMotors()
 {
 	engine.init();
-	stepper = engine.stepperConnectToPin(stepPin);
+	stepper = engine.stepperConnectToPin(STEP_PIN);
 	if (stepper)
 	{
-		stepper->setDirectionPin(dirPin);
+		stepper->setDirectionPin(DIR_PIN);
 		stepper->setAcceleration(stepperAcceleration);
 		stepper->setSpeedInHz(stepperMaxSpeed);
 	}

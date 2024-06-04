@@ -8,19 +8,18 @@ enum State
     STATE_INITIALIZATION,
     STATE_DRIVING,
     STATE_PAUSE_BEGIN,
-    STATE_SCAN_FIELD,
     STATE_MOVE_OBJECT,
     STATE_END_PAUSE,
     STATE_OVERSHOOT,
     STATE_SWITCHPIN_OFF,
-    STATE_STOPPED
+    STATE_STOPPED,
+    STATE_FIELD_OBJECT_ROUTINE
 };
 
 // Current state
 State currentState = STATE_INITIALIZATION;
 
 int pauseCounter = 0;
-float objectAngle;
 
 bool isAllZero(bool *arr, int arrSize)
 {
@@ -46,15 +45,18 @@ bool isAllOne(bool *arr, int arrSize)
     return true;
 }
 
-bool safeWait(unsigned int millisToWait) {
+bool safeWait(unsigned int millisToWait)
+{
     unsigned int beginTime = millis();
-    while (millis() - beginTime < millisToWait) {
-        if (!digitalRead(switchPin)) {
+    while (millis() - beginTime < millisToWait)
+    {
+        if (!digitalRead(switchPin))
+        {
             currentState = STATE_SWITCHPIN_OFF;
-            return false;  // Indicate that the switch pin was toggled
+            return false; // Indicate that the switch pin was toggled
         }
     }
-    return true;  // Indicate that the wait time elapsed without toggling
+    return true; // Indicate that the wait time elapsed without toggling
 }
 int arrayBoolSum(bool *arr, int arrCount)
 {
@@ -89,19 +91,20 @@ int calculateWeightedArraySum(const bool array[], int arrSize)
 
 void closeGrippers()
 {
-    moveGripServo(gripClosingAngle);
+    moveGripServo(GRIP_CLOSING_ANGLE);
 }
 
 void openGrippers()
 {
-    moveGripServo(gripOpenAngle);
+    moveGripServo(GRIP_OPEN_ANGLE);
 }
 
 void pushObjectToPreferredPosition()
 {
     moveToArmConfiguration(pushingObjectPosition);
     openGrippers();
-    delay(1000);
+    if (!safeWait(3000))
+        return;
 
     // Slowly move forward to account for all object placings
     for (int i = 0; i <= 100; i++)
@@ -115,7 +118,7 @@ void pushObjectToPreferredPosition()
 
         delay(10);
         // Interpolate between pushing position and grabbing position
-        moveElbowServo(pushingObjectPosition.elbowAngle - (pushingObjectPosition.elbowAngle - grabbingPosition.elbowAngle)*i/100);
+        moveElbowServo(pushingObjectPosition.elbowAngle - (pushingObjectPosition.elbowAngle - grabbingPosition.elbowAngle) * i / 100);
     }
     moveToArmConfiguration(grabbingPosition);
 }
@@ -241,142 +244,156 @@ void driveCar()
     car::driveMotors(motorInput[0], motorInput[1]);
 }
 
-float scanForObject()
+bool safeWaitUntilStepperStopped()
 {
-    Serial.println("Starting scan");
-    static float angleScanned = 0;
-    static float lastObjectPlace = 0;
+    while (!hasStepperReachedPosition())
+    {
+        if (!digitalRead(switchPin))
+        {
+            currentState = STATE_SWITCHPIN_OFF;
+            return false; // Indicate that the switch pin was toggled
+        }
+    }
+    return true;
+}
 
+// Scans a range of angles for objects
+float scanRange(float beginAngle, float endAngle)
+{
+    const int scanningSpeed = shoulderRotationSteps / secondsPerFullScan;
+    float objectAngle = -1;
     setStepperSpeed(scanningSpeed);
+
+    Serial.print("Scanning angle range: ");
+    Serial.print(beginAngle);
+    Serial.print(" to ");
+    Serial.println(endAngle);
+
     // Move to position that cant hit an object
     moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) {
+    if (!safeWaitUntilStepperStopped())
+    {
         currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
     closeGrippers();
-    
-    // Rotate to where we left off scanning last time.
-    rotateShoulderAbsoluteAngle(angleScanned);
+
+    rotateShoulderAbsoluteAngle(beginAngle);
     // Wait to reach position safely.
-    if(!safeWait(1000)) {
+    if (!safeWaitUntilStepperStopped())
+    {
         currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
 
     moveToArmConfiguration(scanningPosition);
-    if(!safeWait(1000)) {
+    if (!safeWait(1000))
+    {
         currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
         return -1;
     }
     // Will keep turning from where it last scanned, up to the last object found
-    rotateShoulderRelativeAngle(-360+angleScanned+lastObjectPlace+9);
+    rotateShoulderRelativeAngle(endAngle - beginAngle);
 
     while (!hasStepperReachedPosition())
     {
-        if(!digitalRead(switchPin)){
+        if (!digitalRead(switchPin))
+        {
             currentState = STATE_SWITCHPIN_OFF;
-            setStepperSpeed(stepperMaxSpeed);
             return -1;
         }
-        if (digitalRead(objectDetectionPin))
+        if (digitalRead(OBJECT_DETECTION_PIN))
         {
             float currentAngle = getShoulderAngle();
-            angleScanned = currentAngle;
-            lastObjectPlace = currentAngle - 180;
-            // Ensure angle is positive
-            if (lastObjectPlace<0){
-                lastObjectPlace += 360.0f;
-            }
             stopShoulder();
-            setStepperSpeed(stepperMaxSpeed);
-            return currentAngle;
+            objectAngle = currentAngle - SCANNING_OFFSET_ANGLE;
         }
+    }
+    setStepperSpeed(stepperMaxSpeed);
+    return objectAngle;
+}
+
+float scanForObject(float lastObjectPlacedAngle = 0)
+{
+    static float angleScanned = 0;
+
+    Serial.println("Starting scan");
+
+    // Will keep turning from where it last scanned, up to the last object found
+    float objectPlace = scanRange(angleScanned, -360.0f + lastObjectPlacedAngle + SCANNING_OFFSET_ANGLE + SCANNING_TOLERANCE);
+
+    // values below 0 mean that the object wasnt found
+    if (objectPlace > 0.0f)
+    {
+        angleScanned = objectPlace;
+        return objectPlace - SCANNING_OFFSET_ANGLE;
+    }
+    else if (currentState == STATE_SWITCHPIN_OFF)
+    {
+        return -1;
     }
 
     // Object couldnt be found turning counterclockwise.
     // Proceed by turning clockwise from home
+    Serial.println("Object wasnt found counterclockwise, trying clockwise");
+    objectPlace = scanRange(0, lastObjectPlacedAngle - SCANNING_OFFSET_ANGLE - SCANNING_TOLERANCE);
 
-    moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) {
-        currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
-        return -1;
-    }
-    rotateShoulderAbsoluteAngle(0);
-    // Wait to reach position safely.
-    if(!safeWait(1000)) {
-        currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
-        return -1;
-    }
-
-    moveToArmConfiguration(scanningPosition);
-    if(!safeWait(1000)) {
-        currentState = STATE_SWITCHPIN_OFF;
-        setStepperSpeed(stepperMaxSpeed);
-        return -1;
-    }
-
-    // move until halfway into furthest spot next object could be
-    rotateShoulderRelativeAngle(lastObjectPlace-27);
-
-    while (!hasStepperReachedPosition())
+    if (objectPlace > 0.0f)
     {
-        if(!digitalRead(switchPin)){
-            currentState = STATE_SWITCHPIN_OFF;
-            setStepperSpeed(stepperMaxSpeed);
-            return -1;
-        }
-        if (digitalRead(objectDetectionPin))
-        {
-            float currentAngle = getShoulderAngle();
-            stopShoulder();
-            setStepperSpeed(stepperMaxSpeed);
-            return currentAngle;
-        }
+        angleScanned = objectPlace;
+        return objectPlace - SCANNING_OFFSET_ANGLE;
+    }
+    else if (currentState == STATE_SWITCHPIN_OFF)
+    {
+        return -1;
     }
 
-    setStepperSpeed(stepperMaxSpeed);
     Serial.println("ERROR: NO OBJECTS FOUND");
     return -1.0f;
 }
 
+void moveObject(float objectAngle, float destinationAngle)
+{
+    Serial.print("Moving Object from");
+    Serial.print(objectAngle);
+    Serial.print(" to ");
+    Serial.println(destinationAngle);
 
-void moveObject(){
-    Serial.println("Moving Object");
-    moveToArmConfiguration(carryingPosition);
-    rotateShoulderAbsoluteAngle(objectAngle);
-    
-    // Safely waits(switchpin proof) until arm has probably reached positions, tuning needed
-    if(!safeWait(500)) return;
-
-    // grab object
-    pushObjectToPreferredPosition();
-    closeGrippers();
-    if(!safeWait(500)) return;
-
-    //Move 180 degrees and place object
-    moveToArmConfiguration(carryingPosition);
-    if(!safeWait(500)) return;
-    rotateShoulderRelativeAngle(180);
-    if(!safeWait(1000)) return;
-    moveToArmConfiguration(placingPosition);
-    if(!safeWait(500)) return;
+    // First get to safe position
     openGrippers();
     moveToArmConfiguration(carryingPosition);
+    if (!safeWait(1000))
+        return;
+
+    rotateShoulderAbsoluteAngle(objectAngle);
+    if (!safeWaitUntilStepperStopped())
+        return;
+    pushObjectToPreferredPosition();
+    if (!safeWait(1000))
+        return;
+    closeGrippers();
+
+    // Move to destination
+    rotateShoulderAbsoluteAngle(destinationAngle);
+    if (!safeWaitUntilStepperStopped())
+        return;
+    moveToArmConfiguration(placingPosition);
+    if (!safeWait(1000))
+        return;
+    openGrippers();
+    if (!safeWait(500))
+        return;
 }
 
 void pauseBegin()
 {
-    Serial.println("Beginning pause"));
+    Serial.println("Beginning pause");
     int beginTime = millis();
-    
-    while((millis() - beginTime) < beginPauseDriveForwardTime){
-        if (!digitalRead(switchPin)){
+
+    while ((millis() - beginTime) < beginPauseDriveForwardTime)
+    {
+        if (!digitalRead(switchPin))
+        {
             currentState = STATE_SWITCHPIN_OFF;
             return;
         }
@@ -400,9 +417,63 @@ void endPause()
     }
 }
 
+void moveToHome()
+{
+    // return to home
+    openGrippers();
+    if (!safeWait(500))
+    return;
+    moveToArmConfiguration(carryingPosition);
+    if (!safeWait(1000))
+    {
+        return;
+    }
+    rotateShoulderAbsoluteAngle(0);
+    if (!safeWaitUntilStepperStopped())
+    {
+        return;
+    }
+    moveToArmConfiguration(homePosition);
+    if (!safeWait(500))
+        return;
+}
+
+void fieldObjectRoutine()
+{
+    float objectAngle1 = scanForObject(0); // First scan the field
+    if (objectAngle1 < 0.0f)
+    {
+        Serial.println("No objects found, returning");
+        return;
+    }
+    // Displace first object by 180 degrees
+    moveObject(objectAngle1, objectAngle1 + 180);
+    moveToHome();
+    // Wait 3 seconds
+    if (!safeWait(3000))
+    {
+        return;
+    }
+
+    float objectAngle2 = scanForObject(objectAngle1); // Scan the field for the second object
+    if (objectAngle2 < 0.0f)
+    {
+        Serial.println("No objects found, returning");
+        return;
+    }
+    // Displace second object by 180 degrees
+    moveObject(objectAngle2, objectAngle2 + 180);
+    moveToHome();
+    moveObject(objectAngle1, 0);
+    moveToHome();
+    if (!safeWait(3000))
+    {
+        return;
+    }
+}
 
 void updateStateMachine()
-{   
+{
     switch (currentState)
     {
     case STATE_INITIALIZATION:
@@ -435,16 +506,10 @@ void updateStateMachine()
         break;
     case STATE_PAUSE_BEGIN:
         pauseBegin();
-        currentState = STATE_SCAN_FIELD;
+        currentState = STATE_FIELD_OBJECT_ROUTINE;
         break;
-    case STATE_SCAN_FIELD:
-        objectAngle = scanForObject();
-        Serial.println("Object found at: ");
-        Serial.print(objectAngle);
-        currentState = STATE_MOVE_OBJECT;
-        break;
-    case STATE_MOVE_OBJECT:
-        moveObject();
+    case STATE_FIELD_OBJECT_ROUTINE:
+        fieldObjectRoutine();
         currentState = STATE_END_PAUSE;
         break;
     case STATE_END_PAUSE:
@@ -476,6 +541,7 @@ void setup()
     setupMotors();
     currentState = STATE_DRIVING;
 }
- void loop(){
+void loop()
+{
     updateStateMachine();
- }
+}

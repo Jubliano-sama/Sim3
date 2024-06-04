@@ -16,8 +16,8 @@ const int analogSensorThresholds[] = {100, 100, 100, 100, 100, 100, 100}; // Upd
 const int disabledSensors[] = {};
 const int disabledSensorsCount = 0;
 
-const int motorsBackwardPins[]={51,49,46,44}; //{lv,la,rv,ra}
-const int motorsForwardPins[]={50,48,47,45};
+const int motorsForwardPins[]={51,48,46,45}; //{lv,la,rv,ra}
+const int motorsBackwardPins[]={50,49,47,44};
 const int motorsENAPins[]={3,4,6,5};
 const int stopPauseDelay = 700;
 const int beginPauseDriveForwardTime = 500;
