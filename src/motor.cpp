@@ -50,11 +50,13 @@ void stopShoulder()
 	stepper->stopMove();
 }
 
-float getShoulderAngle(){
+float getShoulderAngle()
+{
 	return positionToAngle(stepper->getCurrentPosition());
 }
 
-void rotateShoulderRelativeAngle(float angle){
+void rotateShoulderRelativeAngle(float angle)
+{
 	Serial.print("Rotating shoulder to relative angle: ");
 	Serial.println(angle);
 	moveStepper(static_cast<int>((angle / 360.0f) * shoulderRotationSteps));
@@ -156,13 +158,15 @@ void moveWristServo(int angle)
 	moveServo(wristServo, angle);
 }
 
-void moveToArmConfiguration(ArmConfiguration configuration) {
+void moveToArmConfiguration(ArmConfiguration configuration)
+{
 	moveShoulderServo(configuration.shoulderAngle);
 	moveElbowServo(configuration.elbowAngle);
 	moveWristServo(configuration.wristAngle);
 }
 
-void setStepperSpeed(int stepsPerSecond){
+void setStepperSpeed(int stepsPerSecond)
+{
 	stepper->setSpeedInHz(stepsPerSecond);
 }
 
@@ -179,20 +183,20 @@ void testMotors()
 	delay(1000);
 
 	// Example servo movements
-	moveServo(elbowServo, 0);  // Move elbow servo to 90 degrees
+	moveServo(elbowServo, 80); // Move elbow servo to 90 degrees
 	delay(1000);
-	moveServo(elbowServo, 90); // Move elbow servo to 90 degrees
+	moveServo(elbowServo, 100); // Move elbow servo to 90 degrees
 	delay(1000);
-	moveServo(shoulderServo, 0);  // Move shoulder servo to 45 degrees
+	moveServo(shoulderServo, 80); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(shoulderServo, 90); // Move shoulder servo to 45 degrees
+	moveServo(shoulderServo, 100); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(wristServo, 0);  // Move shoulder servo to 45 degrees
+	moveServo(wristServo, 80); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(wristServo, 90); // Move shoulder servo to 45 degrees
+	moveServo(wristServo, 100); // Move shoulder servo to 45 degrees
 	delay(1000);
-	moveServo(gripServo, 0);  // Close grip slightly (10 degrees)
+	moveServo(gripServo, 80); // Close grip slightly (10 degrees)
 	delay(1000);
-	moveServo(gripServo, 90); // Close grip slightly (10 degrees)
+	moveServo(gripServo, 100); // Close grip slightly (10 degrees)
 	delay(1000);
 }

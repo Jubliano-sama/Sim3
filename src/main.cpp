@@ -543,5 +543,5 @@ void setup()
 }
 void loop()
 {
-    updateStateMachine();
+    testMotors();
 }
