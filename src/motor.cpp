@@ -163,6 +163,7 @@ void moveToArmConfiguration(ArmConfiguration configuration)
 	moveShoulderServo(configuration.shoulderAngle);
 	moveElbowServo(configuration.elbowAngle);
 	moveWristServo(configuration.wristAngle);
+	if (configuration.gripAngle > 0) moveGripServo(configuration.gripAngle);
 }
 
 void setStepperSpeed(int stepsPerSecond)

@@ -18,7 +18,6 @@ namespace car {
         // StartSwitch
         pinMode(switchPin, INPUT_PULLUP);
 
-        Serial.begin(115200);
     }
 
     bool* getAnalogSensorValues() {
