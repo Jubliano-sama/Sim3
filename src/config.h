@@ -19,4 +19,6 @@ const ArmConfiguration grabbingPosition(90, 90, 90);
 const ArmConfiguration pushingObjectPosition(90, 90, 90);
 const ArmConfiguration homePosition(35, 140, 156);
 
+const float driveSpeedMultiplier = 0.7;
+
 const int secondsPerFullScan = 20;

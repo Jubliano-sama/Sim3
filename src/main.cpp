@@ -241,7 +241,7 @@ void driveCar()
     Serial.print("\nPID output: ");
     Serial.println(pid);
 
-    car::driveMotors(motorInput[0], motorInput[1]);
+    car::driveMotors(motorInput[0] * driveSpeedMultiplier, motorInput[1] * driveSpeedMultiplier);
 }
 
 bool safeWaitUntilStepperStopped()
@@ -498,6 +498,7 @@ void updateStateMachine()
                 currentState = STATE_STOPPED;
                 break;
             }
+            pauseCounter++;
             currentState = STATE_PAUSE_BEGIN;
             Serial.println("Pause sign detected");
             break;
@@ -539,9 +540,10 @@ void setup()
     // Initialization code
     car::setupCarHardware();
     setupMotors();
+    moveToArmConfiguration(homePosition);
     currentState = STATE_DRIVING;
 }
 void loop()
 {
-    driveCar();
+    testMotors();
 }

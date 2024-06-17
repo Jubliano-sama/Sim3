@@ -4,7 +4,7 @@
 #define DEBUG 2
 
 const double Kp = 0.15;
-const double Ki = 0.00000;
+const double Ki = 0.00001;
 const double Kd = 0;
 const int switchPin = 53;
 

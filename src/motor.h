@@ -4,8 +4,8 @@
 #include <Servo.h>
 
 // Define motor interface type and pins used for the A4988 driver
-#define DIR_PIN A0
-#define STEP_PIN A1 // 6 7 or 8!!
+#define DIR_PIN A1
+#define STEP_PIN 8 // 6 7 or 8!!
 
 #define ELBOW_SERVO_PIN 12
 #define SHOULDER_SERVO_PIN 10
