@@ -312,7 +312,7 @@ int *updateAndGetRollingBuffer(int *lastBuffer, int lastBufferSize, float newVal
 float scanRange(float beginAngle, float endAngle, int ambientValue)
 {
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 100;
+    const int bufferSize = 25;
     // prepare rolling scanning buffer
     int tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -362,7 +362,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
             float currentAngle = getShoulderAngle();
             objectAngle = currentAngle - SCANNING_OFFSET_ANGLE;
         }
-        delay(10); // Ensure this delay for updating rolling average every 10ms
+        delay(2); // Ensure this delay for updating rolling average
     }
 
     stopShoulder();
