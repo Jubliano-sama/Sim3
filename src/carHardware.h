@@ -19,8 +19,6 @@ const int disabledSensorsCount = 0;
 const int motorsForwardPins[]={51,48,45,34}; //{lv,la,rv,ra}
 const int motorsBackwardPins[]={50,49,44,38};
 const int motorsENAPins[]={3,4,2,5};
-const int stopPauseDelay = 700;
-const int beginPauseDriveForwardTime = 500;
 
 extern int lastDirection;
 

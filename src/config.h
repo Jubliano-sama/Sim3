@@ -2,8 +2,8 @@
 #include <Arduino.h>
 #include "motor.h"
 
-// TODO SET THIS PIN
-#define OBJECT_DETECTION_PIN 1
+#define END_PAUSE_DRIVEFORWARD_MS 1500
+#define BEGIN_PAUSE_DRIVEFORWARD_MS 1000
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
 #define SCANNING_OFFSET_ANGLE 15

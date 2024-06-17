@@ -372,6 +372,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     return objectAngle;
 }
 
+// Returns a pointer to an array containing the objects angles in chronological order
 float *scanForObject()
 {
     static float objectAngles[2] = {-1, -1};
@@ -443,7 +444,7 @@ void beginPause()
     Serial.println("Beginning pause");
     int beginTime = millis();
 
-    while ((millis() - beginTime) < beginPauseDriveForwardTime)
+    while ((millis() - beginTime) < BEGIN_PAUSE_DRIVEFORWARD_MS)
     {
         if (!digitalRead(switchPin))
         {
@@ -460,8 +461,12 @@ void beginPause()
 void endPause()
 {
     Serial.println("Ending pause");
-    // Move forward until line is found to avoid double pause
-    while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount) || isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
+    // Move forward for set amount of time so that discrepancies are avoided
+    
+    //while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount) || isAllOne(car::getAnalogSensorValues(), analogSensorsCount))
+
+    unsigned long beginTime = millis();
+    while((millis() - beginTime) < END_PAUSE_DRIVEFORWARD_MS)
     {
         // safety check
         if (!digitalRead(switchPin))
@@ -469,7 +474,7 @@ void endPause()
             currentState = STATE_SWITCHPIN_OFF;
             return;
         }
-        car::driveMotors(1, 1);
+        car::driveMotors(1*driveSpeedMultiplier, 1*driveSpeedMultiplier);
     }
 }
 
