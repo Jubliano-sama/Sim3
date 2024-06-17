@@ -5,12 +5,12 @@
 
 // Define motor interface type and pins used for the A4988 driver
 #define DIR_PIN A0
-#define STEP_PIN 8 // 6 7 or 8!!
+#define STEP_PIN A1 // 6 7 or 8!!
 
-#define ELBOW_SERVO_PIN 9
+#define ELBOW_SERVO_PIN 12
 #define SHOULDER_SERVO_PIN 10
-#define GRIP_SERVO_PIN A5
-#define WRIST_SERVO_PIN 12
+#define GRIP_SERVO_PIN 11
+#define WRIST_SERVO_PIN 9
 
 const int stepperAcceleration = 400;
 const int stepperMaxSpeed = 5000;

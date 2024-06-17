@@ -12,11 +12,11 @@
 #define GRIP_OPEN_ANGLE 135
 
 // TODO Change for actual angles
-const ArmConfiguration scanningPosition(90, 90, 90);
+const ArmConfiguration scanningPosition(55, 160, 90);
 const ArmConfiguration carryingPosition(90, 90, 90);
 const ArmConfiguration placingPosition(90, 90, 90);
 const ArmConfiguration grabbingPosition(90, 90, 90);
 const ArmConfiguration pushingObjectPosition(90, 90, 90);
-const ArmConfiguration homePosition(90, 90, 90);
+const ArmConfiguration homePosition(35, 140, 156);
 
 const int secondsPerFullScan = 20;

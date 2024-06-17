@@ -218,7 +218,7 @@ void handleOvershoot()
 #if DEBUG >= 2
         Serial.print("Overshoot still detected... turning more");
 #endif
-        if (speed < 0.5)
+        if (speed < 0.8)
         {
             speed += 0.1;
         }
@@ -543,5 +543,5 @@ void setup()
 }
 void loop()
 {
-    testMotors();
+    driveCar();
 }
