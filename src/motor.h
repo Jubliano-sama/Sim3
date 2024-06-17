@@ -12,8 +12,8 @@
 #define GRIP_SERVO_PIN 11
 #define WRIST_SERVO_PIN 9
 
-const int stepperAcceleration = 400;
-const int stepperMaxSpeed = 5000;
+const int stepperAcceleration = 100;
+const int stepperMaxSpeed = 1000;
 const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
