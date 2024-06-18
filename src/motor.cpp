@@ -8,6 +8,11 @@ Servo elbowServo;
 Servo wristServo;
 Servo gripServo;
 
+int currentElbowAngle = 90;
+int currentShoulderAngle = 90;
+int currentWristAngle = 90;
+int currentGripAngle = 90;
+
 void setupMotors();
 void moveStepper(int steps);
 void stopShoulder();
@@ -134,6 +139,7 @@ void moveElbowServo(int angle)
 {
 	Serial.print("Moving elbow servo to angle: ");
 	Serial.println(angle);
+	currentElbowAngle = angle;
 	moveServo(elbowServo, angle);
 }
 
@@ -141,6 +147,7 @@ void moveShoulderServo(int angle)
 {
 	Serial.print("Moving shoulder servo to angle: ");
 	Serial.println(angle);
+	currentShoulderAngle = angle;
 	moveServo(shoulderServo, angle);
 }
 
@@ -148,6 +155,7 @@ void moveGripServo(int angle)
 {
 	Serial.print("Moving grip servo to angle: ");
 	Serial.println(angle);
+	currentGripAngle = angle;
 	moveServo(gripServo, angle);
 }
 
@@ -155,6 +163,7 @@ void moveWristServo(int angle)
 {
 	Serial.print("Moving wrist servo to angle: ");
 	Serial.println(angle);
+	currentWristAngle = angle;
 	moveServo(wristServo, angle);
 }
 
@@ -164,6 +173,22 @@ void moveToArmConfiguration(ArmConfiguration configuration)
 	moveElbowServo(configuration.elbowAngle);
 	moveWristServo(configuration.wristAngle);
 	if (configuration.gripAngle > 0) moveGripServo(configuration.gripAngle);
+}
+
+// Watch out, this function is blocking
+void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long delayTime){
+	int iterations = delayTime/10;
+	for (int i = 0; i <= iterations; i++)
+    {
+        // Interpolate between pushing position and grabbing position
+        moveElbowServo(currentElbowAngle - (currentElbowAngle - configuration.elbowAngle) * i / iterations);
+        moveShoulderServo(currentShoulderAngle - (currentShoulderAngle - configuration.shoulderAngle) * i / iterations);
+		moveWristServo(currentWristAngle - (currentWristAngle - configuration.wristAngle) * i / iterations);
+		if(configuration.gripAngle>0){
+			moveGripServo(currentGripAngle - (currentGripAngle - configuration.gripAngle) * i / iterations);
+		}
+		delay(10);
+    }
 }
 
 void setStepperSpeed(int stepsPerSecond)
