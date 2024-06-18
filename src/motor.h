@@ -14,7 +14,7 @@
 
 const int stepperAcceleration = 100;
 const int stepperMaxSpeed = 1000;
-const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
+const float stepperGearRatio = 1.0f + (38.0f / 14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
 const float maxRotationsOneDirection = 2;
@@ -47,3 +47,4 @@ void moveElbowServo(int angle);
 void moveShoulderServo(int angle);
 void moveGripServo(int angle);
 void moveToArmConfiguration(ArmConfiguration configuration);
+void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long delayTime);

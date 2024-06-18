@@ -18,10 +18,10 @@ const ArmConfiguration scanningPosition(34, 163, 125, 36);
 const ArmConfiguration carryingPosition(50, 163, 130);
 const ArmConfiguration placingPosition(90, 90, 90);
 const ArmConfiguration grabbingPosition(0, 123, 149);
-const ArmConfiguration pushingObjectPosition(31, 153, 90, 105);
-const ArmConfiguration pushingObjectPosition2(31, 136, 90, 105);
+const ArmConfiguration pushingObjectPosition(31, 153, 90, 115);
+const ArmConfiguration pushingObjectPosition2(31, 136, 90, 115);
 const ArmConfiguration homePosition(35, 140, 156);
 
 const float driveSpeedMultiplier = 0.7;
 
-const int secondsPerFullScan = 20;
+const int secondsPerFullScan = 30;

@@ -106,25 +106,12 @@ void openGrippers()
 
 void pushObjectToPreferredPosition()
 {
-    moveToArmConfiguration(pushingObjectPosition);
-    delay(1000);
-    if (!safeWait(3000))
+    interpolateToArmConfiguration(pushingObjectPosition, 1000);
+    if (!safeWait(1000))
         return;
 
     // Slowly move forward to account for all object placings
-    for (int i = 0; i <= 100; i++)
-    {
-        // Safety check
-        if (!digitalRead(switchPin))
-        {
-            currentState = STATE_SWITCHPIN_OFF;
-            return;
-        }
-
-        delay(10);
-        // Interpolate between pushing position and grabbing position
-        moveElbowServo(pushingObjectPosition.elbowAngle - (pushingObjectPosition.elbowAngle - pushingObjectPosition2.elbowAngle) * i / 100);
-    }
+    interpolateToArmConfiguration(pushingObjectPosition2, 2000);
 }
 
 double calculatePID(const double desiredValue, const double actualValue, const double Kp, const double Ki, const double Kd)
@@ -317,7 +304,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     Serial.println(endAngle);
 
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 800;
+    const int bufferSize = 500;
     // prepare rolling scanning buffer
     float tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -330,7 +317,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     float objectAngle = -1;
     setStepperSpeed(scanningSpeed);
     // first move to carryingposition then rotateshoulder then move to scanning position
-    if (!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(beginAngle) || !moveToPositionSafely(scanningPosition, 2000))
+    if (!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(beginAngle))
     {
         currentState = STATE_SWITCHPIN_OFF;
         return -1;
@@ -338,9 +325,22 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
 
 
     rotateShoulderRelativeAngle(endAngle - beginAngle);
-
+    interpolateToArmConfiguration(scanningPosition, 1000);
+    delay(500);
+    
+    float previousShoulderAngle = getShoulderAngle();
     while (!hasStepperReachedPosition())
     {
+        if(getShoulderAngle() == previousShoulderAngle){
+            int currentMeasurement = objectSensor.readRange();
+            scanBufferPointer = updateAndGetRollingBuffer(scanBufferPointer, bufferSize, currentMeasurement);
+            delay(1);
+            //debugging
+            Serial.println("waiting for movement");
+            continue;
+        }
+        previousShoulderAngle = getShoulderAngle();
+
         if (!digitalRead(switchPin))
         {
             currentState = STATE_SWITCHPIN_OFF;
@@ -355,6 +355,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
             sum += scanBufferPointer[i];
         }
         float rollingAverage = (sum / (float)bufferSize);
+        Serial.print("Rolling average: ");
         Serial.println(rollingAverage);
         if (rollingAverage < threshold)
         {
@@ -362,7 +363,6 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
             objectAngle = currentAngle - SCANNING_OFFSET_ANGLE;
             break;
         }
-        delay(4); // Ensure this delay for updating rolling average
     }
 
     stopShoulder();
@@ -585,6 +585,7 @@ void setup()
     // Initialization code
     car::setupCarHardware();
     setupMotors();
+    moveToArmConfiguration(homePosition);
     Serial.begin(115200); // Start Serial at 115200bps
     Wire.begin();         // Start I2C library
     delay(100);           // delay .1s
@@ -598,33 +599,19 @@ void setup()
     currentState = STATE_DRIVING;
 
     delay(1000);
-    moveToArmConfiguration(homePosition);
 }
 void loop()
 {
     pushObjectToPreferredPosition();
     moveToArmConfiguration(grabbingPosition);
-    moveElbowServo(grabbingPosition.elbowAngle+33);
-    moveShoulderServo(grabbingPosition.shoulderAngle+8);
+    interpolateToArmConfiguration(ArmConfiguration(grabbingPosition.shoulderAngle +8 , grabbingPosition.elbowAngle+33, 160), 1000);
     delay(1000);
     openGrippers();
     delay(1000);
-    for (int i = 0; i <= 100; i++)
-    {
-        // Safety check
-        if (!digitalRead(switchPin))
-        {
-            currentState = STATE_SWITCHPIN_OFF;
-            return;
-        }
-
-        delay(10);
-        // Interpolate between pushing position and grabbing position
-        moveElbowServo(grabbingPosition.elbowAngle + 33 - (grabbingPosition.elbowAngle +33 - grabbingPosition.elbowAngle) * i / 100);
-        moveShoulderServo(grabbingPosition.shoulderAngle + 8 - (grabbingPosition.shoulderAngle +8 - grabbingPosition.shoulderAngle) * i / 100);
-    }
-    moveToArmConfiguration(grabbingPosition);
+    interpolateToArmConfiguration(grabbingPosition, 2000);
     delay(1000);
     closeGrippers();
     delay(1000);
+    openGrippers();
+    delay(500);
 }

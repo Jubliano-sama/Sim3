@@ -181,9 +181,15 @@ void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long
 	for (int i = 0; i <= iterations; i++)
     {
         // Interpolate between pushing position and grabbing position
-        moveElbowServo(currentElbowAngle - (currentElbowAngle - configuration.elbowAngle) * i / iterations);
-        moveShoulderServo(currentShoulderAngle - (currentShoulderAngle - configuration.shoulderAngle) * i / iterations);
-		moveWristServo(currentWristAngle - (currentWristAngle - configuration.wristAngle) * i / iterations);
+		if(configuration.elbowAngle>0){
+			moveElbowServo(currentElbowAngle - (currentElbowAngle - configuration.elbowAngle) * i / iterations);
+		}
+		if(configuration.shoulderAngle>0){
+			moveShoulderServo(currentShoulderAngle - (currentShoulderAngle - configuration.shoulderAngle) * i / iterations);
+		}
+		if(configuration.wristAngle>0){
+			moveWristServo(currentWristAngle - (currentWristAngle - configuration.wristAngle) * i / iterations);
+		}
 		if(configuration.gripAngle>0){
 			moveGripServo(currentGripAngle - (currentGripAngle - configuration.gripAngle) * i / iterations);
 		}
