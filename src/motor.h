@@ -4,8 +4,8 @@
 #include <Servo.h>
 
 // Define motor interface type and pins used for the A4988 driver
-#define DIR_PIN A0
-#define STEP_PIN 8 // 6 7 or 8!!
+#define DIR_PIN A1
+#define STEP_PIN 7 // 6 7 or 8!!
 
 #define ELBOW_SERVO_PIN 12
 #define SHOULDER_SERVO_PIN 10
@@ -17,6 +17,7 @@ const int stepperMaxSpeed = 1000;
 const float stepperGearRatio = 1.0f+(38.0f/14.0f); // x rotations per shoulder rotation
 const int stepsPerRotation = 200;
 const float shoulderRotationSteps = (float)stepsPerRotation * stepperGearRatio;
+const float maxRotationsOneDirection = 2;
 
 struct ArmConfiguration
 {
