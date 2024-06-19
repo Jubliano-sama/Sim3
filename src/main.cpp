@@ -106,6 +106,7 @@ void openGrippers()
 
 void pushObjectToPreferredPosition()
 {
+    interpolateToArmConfiguration(ArmConfiguration(-1,-1, pushingObjectPosition.wristAngle,-1), 500);
     interpolateToArmConfiguration(pushingObjectPosition, 1000);
     if (!safeWait(1000))
         return;
@@ -265,7 +266,7 @@ float measureAmbientValue()
     float sum = 0;
     int count = 0;
 
-    if(!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(25) || !moveToPositionSafely(scanningPosition, 1000)){
+    if(!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(0) || !moveToPositionSafely(scanningPosition, 1000)){
         currentState = STATE_SWITCHPIN_OFF;
         return -1;
     }
@@ -305,7 +306,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     Serial.println(endAngle);
 
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 500;
+    const int bufferSize = 250;
     // prepare rolling scanning buffer
     float tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -325,9 +326,9 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     }
 
 
-    rotateShoulderRelativeAngle(endAngle - beginAngle);
     interpolateToArmConfiguration(scanningPosition, 1000);
-    delay(500);
+    delay(1000);
+    rotateShoulderRelativeAngle(endAngle - beginAngle);
     
     float previousShoulderAngle = getShoulderAngle();
     while (!hasStepperReachedPosition())
@@ -335,7 +336,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
         if(getShoulderAngle() == previousShoulderAngle){
             int currentMeasurement = objectSensor.readRange();
             scanBufferPointer = updateAndGetRollingScanBuffer(scanBufferPointer, bufferSize, currentMeasurement);
-            delay(1);
+            delay(0.2);
             //debugging
             Serial.println("waiting for movement");
             continue;
@@ -399,7 +400,7 @@ float *scanForObject()
     }
     // Find second object
 
-    objectPlace = scanRange(objectPlace, 360.0f, ambientValue);
+    objectPlace = scanRange(objectPlace + SCANNING_OBJECT_ANGLE_TOLERANCE, 360.0f, ambientValue);
 
     if (objectPlace > 0.0f)
     {
@@ -414,7 +415,7 @@ float *scanForObject()
     return objectAngles;
 }
 
-void moveObject(float objectAngle, float destinationAngle)
+void moveObject(float objectAngle, float destinationAngle, bool openGripperAtEnd)
 {
     Serial.print("Moving Object from");
     Serial.print(objectAngle);
@@ -423,20 +424,28 @@ void moveObject(float objectAngle, float destinationAngle)
 
     // First get to safe position
     openGrippers();
-    if(!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(objectAngle)){
+    interpolateToArmConfiguration(carryingPosition, 1000);
+    if(!rotateShoulderSafely(objectAngle)){
         return;
     }
     pushObjectToPreferredPosition();
-    if (!safeWait(1000))
-        return;
+    interpolateToArmConfiguration(ArmConfiguration(grabbingPosition.shoulderAngle +27 , grabbingPosition.elbowAngle+50, 160), 1500);
+    delay(500);
+    openGrippers();
+    delay(1000);
+    interpolateToArmConfiguration(grabbingPosition, 1000);
+    delay(1000);
     closeGrippers();
-
+    delay(1000);
+    interpolateToArmConfiguration(carryingPosition, 500);
     // Move to destination
-    if(!rotateShoulderSafely(destinationAngle) || !moveToPositionSafely(placingPosition, 1000)){
+    if(!rotateShoulderSafely(destinationAngle)){
         return;
     }
-    openGrippers();
-    if (!safeWait(500))
+    interpolateToArmConfiguration(placingPosition, 1000);
+    delay(1000);
+    if(openGripperAtEnd) openGrippers();
+    if (!safeWait(1000))
         return;
 }
 
@@ -481,10 +490,9 @@ void endPause()
 
 void moveToHome()
 {
-    // return to home
-    openGrippers();
     if (!safeWait(500))
         return;
+    interpolateToArmConfiguration(carryingPosition, 1000);
     if(!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(0) || !moveToPositionSafely(homePosition, 1000)){
         return;
     }
@@ -499,7 +507,7 @@ void fieldObjectRoutine()
         return;
     }
     // Displace first object by 180 degrees
-    moveObject(objectAngles[0], objectAngles[0] + 180);
+    moveObject(objectAngles[0], objectAngles[0] + 180,true);
     moveToHome();
     // Wait 3 seconds
     if (!safeWait(3000))
@@ -508,9 +516,9 @@ void fieldObjectRoutine()
     }
 
     // Displace second object by 180 degrees
-    moveObject(objectAngles[1], objectAngles[1] + 180);
+    moveObject(objectAngles[1], objectAngles[1] + 180, true);
     moveToHome();
-    moveObject(objectAngles[0], 0);
+    moveObject(objectAngles[0]+180, 0, false);
     moveToHome();
     if (!safeWait(3000))
     {
@@ -573,14 +581,31 @@ void updateStateMachine()
         stopShoulder();
         delay(500);
         // if switchpin is turned on, return to driving state
-        if (digitalRead(SWITCHPIN))
+        if (digitalRead(SWITCHPIN)){
             currentState = STATE_DRIVING;
             pauseCounter = 0;
+        }
+        break;
+    case STATE_STOPPED:
+        unsigned long beginTime = millis();
+        while ((millis() - beginTime) < STOP_DRIVE_FORWARD_MS)
+        {
+            if (!digitalRead(SWITCHPIN))
+            {
+                currentState = STATE_SWITCHPIN_OFF;
+                return;
+            }
+            car::driveMotors(0.4, 0.4);
+        }
+        car::driveMotors(0, 0);
+        while(digitalRead(SWITCHPIN));
+        currentState = STATE_SWITCHPIN_OFF;
         break;
     default:
         // Default case should not be reached
         break;
     }
+
 }
 
 void setup()
@@ -604,18 +629,8 @@ void setup()
 
     delay(1000);
 }
+
 void loop()
 {
-    pushObjectToPreferredPosition();
-    moveToArmConfiguration(grabbingPosition);
-    interpolateToArmConfiguration(ArmConfiguration(grabbingPosition.shoulderAngle +8 , grabbingPosition.elbowAngle+33, 160), 1000);
-    delay(1000);
-    openGrippers();
-    delay(1000);
-    interpolateToArmConfiguration(grabbingPosition, 2000);
-    delay(1000);
-    closeGrippers();
-    delay(1000);
-    openGrippers();
-    delay(500);
+    updateStateMachine();
 }
