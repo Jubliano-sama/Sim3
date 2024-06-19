@@ -284,14 +284,15 @@ float measureAmbientValue()
     return average;
 }
 
-float *updateAndGetRollingBuffer(float *lastBuffer, int lastBufferSize, float newValue)
+float *updateAndGetRollingScanBuffer(float *lastBuffer, int lastBufferSize, float newValue)
 {
+    float previousLastScan = lastBuffer[lastBufferSize-1];
     // Shift elements
     for (int i = 1; i < lastBufferSize; i++)
     {
         lastBuffer[i] = lastBuffer[i - 1];
     }
-    lastBuffer[0] = newValue;
+    lastBuffer[0] = (newValue+previousLastScan)/2.0f;
     return lastBuffer;
 }
 
@@ -333,7 +334,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     {
         if(getShoulderAngle() == previousShoulderAngle){
             int currentMeasurement = objectSensor.readRange();
-            scanBufferPointer = updateAndGetRollingBuffer(scanBufferPointer, bufferSize, currentMeasurement);
+            scanBufferPointer = updateAndGetRollingScanBuffer(scanBufferPointer, bufferSize, currentMeasurement);
             delay(1);
             //debugging
             Serial.println("waiting for movement");
@@ -348,7 +349,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
         }
 
         int currentMeasurement = objectSensor.readRange();
-        scanBufferPointer = updateAndGetRollingBuffer(scanBufferPointer, bufferSize, currentMeasurement);
+        scanBufferPointer = updateAndGetRollingScanBuffer(scanBufferPointer, bufferSize, currentMeasurement);
         float sum = 0;
         for (int i = 0; i < bufferSize; i++)
         {
