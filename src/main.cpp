@@ -55,7 +55,7 @@ bool safeWait(unsigned int millisToWait)
     unsigned int beginTime = millis();
     while (millis() - beginTime < millisToWait)
     {
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             return false; // Indicate that the switch pin was toggled
@@ -200,7 +200,7 @@ void handleOvershoot()
     while (isAllZero(car::getAnalogSensorValues(), analogSensorsCount))
     {
         // safety check
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             car::driveMotors(0, 0);
             return;
@@ -239,7 +239,7 @@ bool safeWaitUntilStepperStopped()
 {
     while (!hasStepperReachedPosition())
     {
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             return false; // Indicate that the switch pin was toggled
@@ -342,7 +342,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
         }
         previousShoulderAngle = getShoulderAngle();
 
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             return -1;
@@ -447,7 +447,7 @@ void beginPause()
 
     while ((millis() - beginTime) < BEGIN_PAUSE_DRIVEFORWARD_MS)
     {
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             return;
@@ -470,7 +470,7 @@ void endPause()
     while((millis() - beginTime) < END_PAUSE_DRIVEFORWARD_MS)
     {
         // safety check
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             return;
@@ -526,7 +526,7 @@ void updateStateMachine()
         Serial.println("ILLEGAL STATE: STATE INITIALIZATION");
         break;
     case STATE_DRIVING:
-        if (!digitalRead(switchPin))
+        if (!digitalRead(SWITCHPIN))
         {
             currentState = STATE_SWITCHPIN_OFF;
             break;
@@ -570,10 +570,12 @@ void updateStateMachine()
     case STATE_SWITCHPIN_OFF:
         Serial.println("Switchpin off");
         car::driveMotors(0, 0);
+        stopShoulder();
         delay(500);
         // if switchpin is turned on, return to driving state
-        if (digitalRead(switchPin))
+        if (digitalRead(SWITCHPIN))
             currentState = STATE_DRIVING;
+            pauseCounter = 0;
         break;
     default:
         // Default case should not be reached
@@ -583,6 +585,7 @@ void updateStateMachine()
 
 void setup()
 {
+    pinMode(SWITCHPIN, INPUT_PULLUP);
     // Initialization code
     car::setupCarHardware();
     setupMotors();
@@ -594,7 +597,7 @@ void setup()
     if (!objectSensor.begin())
     {
         Serial.println("Failed to initialize. Freezing..."); // Initialize device and check for errors
-        while (1)
+        while (true)
             ;
     }
     currentState = STATE_DRIVING;

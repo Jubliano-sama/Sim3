@@ -3,11 +3,6 @@
 // 0 = No Debug, 1 = Only special cases(pause,stop,overshoot), 2 = everyhting
 #define DEBUG 2
 
-const double Kp = 0.13;
-const double Ki = 0.00001;
-const double Kd = 0;
-const int switchPin = 53;
-
 const int analogSensors[] = { A9, A8, A7, A6, A5, A4, A3}; // Update with actual analog sensor pins
 const int analogSensorsCount = 7; // Update with the actual number of analog sensors
 const int analogSensorThresholds[] = {250, 200, 150, 250, 250, 150, 200}; // Update with actual threshold values

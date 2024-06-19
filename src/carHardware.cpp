@@ -15,8 +15,6 @@ namespace car {
         {
             pinMode(analogSensors[i], INPUT);
         }
-        // StartSwitch
-        pinMode(switchPin, INPUT_PULLUP);
 
     }
 
