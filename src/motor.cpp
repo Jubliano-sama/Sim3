@@ -46,6 +46,12 @@ void moveStepper(int steps)
 	Serial.print("Moving stepper ");
 	Serial.print(steps);
 	Serial.println(" steps.");
+	if((stepper->getCurrentPosition() + steps) > maxRotationsOneDirection * shoulderRotationSteps){
+		stepper->move(steps-shoulderRotationSteps);
+		return;
+	} else if(((stepper->getCurrentPosition() + steps) < -maxRotationsOneDirection * shoulderRotationSteps)) {
+		stepper->move(steps+shoulderRotationSteps);
+	}
 	stepper->move(steps);
 }
 
@@ -187,16 +193,16 @@ void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long
 	for (int i = 0; i <= iterations; i++)
     {
         // Interpolate between pushing position and grabbing position
-		if(configuration.elbowAngle>0){
+		if(configuration.elbowAngle>0.0f){
 			moveElbowServo(beginningElbowAngle - (beginningElbowAngle - configuration.elbowAngle) * i / iterations);
 		}
-		if(configuration.shoulderAngle>0){
+		if(configuration.shoulderAngle>0.0f){
 			moveShoulderServo(beginningShoulderAngle - (beginningShoulderAngle - configuration.shoulderAngle) * i / iterations);
 		}
-		if(configuration.wristAngle>0){
+		if(configuration.wristAngle>0.0f){
 			moveWristServo(beginningWristAngle - (beginningWristAngle - configuration.wristAngle) * i / iterations);
 		}
-		if(configuration.gripAngle>0){
+		if(configuration.gripAngle>0.0f){
 			moveGripServo(beginningGripAngle - (beginningGripAngle - configuration.gripAngle) * i / iterations);
 		}
 		delay(10);
