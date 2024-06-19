@@ -598,6 +598,13 @@ void updateStateMachine()
             car::driveMotors(0.4, 0.4);
         }
         car::driveMotors(0, 0);
+        rotateShoulderSafely(90);
+        interpolateToArmConfiguration(placingPosition,1000);
+        delay(1000);
+        openGrippers();
+        delay(500);
+        interpolateToArmConfiguration(carryingPosition, 1000);
+        moveToHome();
         while(digitalRead(SWITCHPIN));
         currentState = STATE_SWITCHPIN_OFF;
         break;
