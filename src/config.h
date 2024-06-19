@@ -3,11 +3,11 @@
 #include "motor.h"
 
 #define END_PAUSE_DRIVEFORWARD_MS 500
-#define BEGIN_PAUSE_DRIVEFORWARD_MS 1300
+#define BEGIN_PAUSE_DRIVEFORWARD_MS 1200
 #define STOP_DRIVE_FORWARD_MS 2000
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
-#define SCANNING_OFFSET_ANGLE -2.5
+#define SCANNING_OFFSET_ANGLE -1
 #define SCANNING_OBJECT_ANGLE_TOLERANCE 18 // This value will be used to make sure we dont hit a object that has already been scanned
 #define SCANNING_THRESHOLD_MM 5.5;
 
@@ -16,12 +16,12 @@
 #define SWITCHPIN 53
 
 // TODO Change for actual angles
-const ArmConfiguration scanningPosition(56, 178, 122, 33);
+const ArmConfiguration scanningPosition(56, 178, 112, 33);
 const ArmConfiguration carryingPosition(90, 173, 140);
 const ArmConfiguration placingPosition(1, 123, 173);
-const ArmConfiguration grabbingPosition(2, 123, 180);
-const ArmConfiguration pushingObjectPosition(46, 177, 90, 115);
-const ArmConfiguration pushingObjectPosition2(46, 150, 90, 115);
+const ArmConfiguration grabbingPosition(0.1, 128, 180);
+const ArmConfiguration pushingObjectPosition(46, 177, 90, 110);
+const ArmConfiguration pushingObjectPosition2(46, 150, 90, 110);
 const ArmConfiguration homePosition(35, 140, 156);
 
 const float driveSpeedMultiplier = 0.7;

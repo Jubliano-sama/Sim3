@@ -306,7 +306,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     Serial.println(endAngle);
 
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 250;
+    const int bufferSize = 350;
     // prepare rolling scanning buffer
     float tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -598,7 +598,7 @@ void updateStateMachine()
             car::driveMotors(0.4, 0.4);
         }
         car::driveMotors(0, 0);
-        rotateShoulderSafely(90);
+        rotateShoulderSafely(270);
         interpolateToArmConfiguration(placingPosition,1000);
         delay(1000);
         openGrippers();

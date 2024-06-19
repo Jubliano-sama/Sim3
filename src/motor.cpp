@@ -196,7 +196,7 @@ void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long
 		if(configuration.elbowAngle>0.0f){
 			moveElbowServo(beginningElbowAngle - (beginningElbowAngle - configuration.elbowAngle) * i / iterations);
 		}
-		if(configuration.shoulderAngle>0.0f){
+		if(configuration.shoulderAngle>-0.1f){
 			moveShoulderServo(beginningShoulderAngle - (beginningShoulderAngle - configuration.shoulderAngle) * i / iterations);
 		}
 		if(configuration.wristAngle>0.0f){
