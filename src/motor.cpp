@@ -178,20 +178,26 @@ void moveToArmConfiguration(ArmConfiguration configuration)
 // Watch out, this function is blocking
 void interpolateToArmConfiguration(ArmConfiguration configuration, unsigned long delayTime){
 	int iterations = delayTime/10;
+
+	int beginningElbowAngle = currentElbowAngle;
+	int beginningShoulderAngle = currentShoulderAngle;
+	int beginningWristAngle = currentWristAngle;
+	int beginningGripAngle = currentGripAngle;
+
 	for (int i = 0; i <= iterations; i++)
     {
         // Interpolate between pushing position and grabbing position
 		if(configuration.elbowAngle>0){
-			moveElbowServo(currentElbowAngle - (currentElbowAngle - configuration.elbowAngle) * i / iterations);
+			moveElbowServo(beginningElbowAngle - (beginningElbowAngle - configuration.elbowAngle) * i / iterations);
 		}
 		if(configuration.shoulderAngle>0){
-			moveShoulderServo(currentShoulderAngle - (currentShoulderAngle - configuration.shoulderAngle) * i / iterations);
+			moveShoulderServo(beginningShoulderAngle - (beginningShoulderAngle - configuration.shoulderAngle) * i / iterations);
 		}
 		if(configuration.wristAngle>0){
-			moveWristServo(currentWristAngle - (currentWristAngle - configuration.wristAngle) * i / iterations);
+			moveWristServo(beginningWristAngle - (beginningWristAngle - configuration.wristAngle) * i / iterations);
 		}
 		if(configuration.gripAngle>0){
-			moveGripServo(currentGripAngle - (currentGripAngle - configuration.gripAngle) * i / iterations);
+			moveGripServo(beginningGripAngle - (beginningGripAngle - configuration.gripAngle) * i / iterations);
 		}
 		delay(10);
     }
