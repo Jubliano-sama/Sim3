@@ -11,7 +11,6 @@ enum State
     STATE_INITIALIZATION,
     STATE_DRIVING,
     STATE_PAUSE_BEGIN,
-    STATE_MOVE_OBJECT,
     STATE_END_PAUSE,
     STATE_OVERSHOOT,
     STATE_SWITCHPIN_OFF,
@@ -52,7 +51,7 @@ bool isAllOne(bool *arr, int arrSize)
 
 bool safeWait(unsigned int millisToWait)
 {
-    unsigned int beginTime = millis();
+    unsigned long beginTime = millis();
     while (millis() - beginTime < millisToWait)
     {
         if (!digitalRead(SWITCHPIN))
@@ -306,7 +305,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     Serial.println(endAngle);
 
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 350;
+    const int bufferSize = 400;
     // prepare rolling scanning buffer
     float tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -526,6 +525,27 @@ void fieldObjectRoutine()
     }
 }
 
+void startStop(){
+    unsigned long beginMillis = millis();
+        while ((millis() - beginMillis) < STOP_DRIVE_FORWARD_MS)
+        {
+            if (!digitalRead(SWITCHPIN))
+            {
+                currentState = STATE_SWITCHPIN_OFF;
+                break;
+            }
+            car::driveMotors(0.4, 0.4);
+        }
+        car::driveMotors(0, 0);
+        rotateShoulderSafely(270);
+        interpolateToArmConfiguration(placingPosition,1000);
+        delay(1000);
+        openGrippers();
+        delay(500);
+        interpolateToArmConfiguration(carryingPosition, 1000);
+        moveToHome();
+}
+
 void updateStateMachine()
 {
     switch (currentState)
@@ -587,24 +607,7 @@ void updateStateMachine()
         }
         break;
     case STATE_STOPPED:
-        unsigned long beginTime = millis();
-        while ((millis() - beginTime) < STOP_DRIVE_FORWARD_MS)
-        {
-            if (!digitalRead(SWITCHPIN))
-            {
-                currentState = STATE_SWITCHPIN_OFF;
-                return;
-            }
-            car::driveMotors(0.4, 0.4);
-        }
-        car::driveMotors(0, 0);
-        rotateShoulderSafely(270);
-        interpolateToArmConfiguration(placingPosition,1000);
-        delay(1000);
-        openGrippers();
-        delay(500);
-        interpolateToArmConfiguration(carryingPosition, 1000);
-        moveToHome();
+        startStop();
         while(digitalRead(SWITCHPIN));
         currentState = STATE_SWITCHPIN_OFF;
         break;
