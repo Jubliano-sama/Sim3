@@ -525,27 +525,6 @@ void fieldObjectRoutine()
     }
 }
 
-void startStop(){
-    unsigned long beginMillis = millis();
-        while ((millis() - beginMillis) < STOP_DRIVE_FORWARD_MS)
-        {
-            if (!digitalRead(SWITCHPIN))
-            {
-                currentState = STATE_SWITCHPIN_OFF;
-                break;
-            }
-            car::driveMotors(0.4, 0.4);
-        }
-        car::driveMotors(0, 0);
-        rotateShoulderSafely(270);
-        interpolateToArmConfiguration(placingPosition,1000);
-        delay(1000);
-        openGrippers();
-        delay(500);
-        interpolateToArmConfiguration(carryingPosition, 1000);
-        moveToHome();
-}
-
 void updateStateMachine()
 {
     switch (currentState)
@@ -607,10 +586,29 @@ void updateStateMachine()
         }
         break;
     case STATE_STOPPED:
-        startStop();
+        {
+        unsigned long beginMillis = millis();
+        while ((millis() - beginMillis) < STOP_DRIVE_FORWARD_MS)
+        {
+            if (!digitalRead(SWITCHPIN))
+            {
+                currentState = STATE_SWITCHPIN_OFF;
+                break;
+            }
+            car::driveMotors(0.4, 0.4);
+        }
+        car::driveMotors(0, 0);
+        rotateShoulderSafely(270);
+        interpolateToArmConfiguration(placingPosition,1000);
+        delay(1000);
+        openGrippers();
+        delay(500);
+        interpolateToArmConfiguration(carryingPosition, 1000);
+        moveToHome();
         while(digitalRead(SWITCHPIN));
         currentState = STATE_SWITCHPIN_OFF;
         break;
+        }
     default:
         // Default case should not be reached
         break;
