@@ -305,7 +305,7 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     Serial.println(endAngle);
 
     const float threshold = ambientValue - SCANNING_THRESHOLD_MM;
-    const int bufferSize = 400;
+    const int bufferSize = 90;
     // prepare rolling scanning buffer
     float tempScanBuffer[bufferSize];
     for (int i = 0; i < bufferSize; i++)
@@ -330,14 +330,26 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     rotateShoulderRelativeAngle(endAngle - beginAngle);
     
     float previousShoulderAngle = getShoulderAngle();
+    
+    const unsigned long delayBetweenStepsMicros = ((secondsPerFullScan * 1e6)/shoulderRotationSteps)/2;
+    const unsigned long measurementsPerStep = (float)bufferSize / (SCANNING_ROLLING_AVERAGE_ANGLE / (360.0f / shoulderRotationSteps));
+    const unsigned long delayBetweenMeasurements = delayBetweenStepsMicros / measurementsPerStep;
+    unsigned int sum = bufferSize*ambientValue;
+    unsigned int lastUpdatedIndex = bufferSize;
+
     while (!hasStepperReachedPosition())
     {
         if(getShoulderAngle() == previousShoulderAngle){
+            unsigned long beginTime = micros();
             int currentMeasurement = objectSensor.readRange();
-            scanBufferPointer = updateAndGetRollingScanBuffer(scanBufferPointer, bufferSize, currentMeasurement);
-            delay(0.2);
-            //debugging
-            Serial.println("waiting for movement");
+            if (lastUpdatedIndex <= 0) {
+                lastUpdatedIndex = bufferSize;
+            }
+            sum -= scanBufferPointer[lastUpdatedIndex - 1];
+            sum += currentMeasurement;
+            scanBufferPointer[lastUpdatedIndex-1] = currentMeasurement;
+            lastUpdatedIndex--;
+            delayMicroseconds(delayBetweenMeasurements - (micros() - beginTime));
             continue;
         }
         previousShoulderAngle = getShoulderAngle();
@@ -348,13 +360,6 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
             return -1;
         }
 
-        int currentMeasurement = objectSensor.readRange();
-        scanBufferPointer = updateAndGetRollingScanBuffer(scanBufferPointer, bufferSize, currentMeasurement);
-        float sum = 0;
-        for (int i = 0; i < bufferSize; i++)
-        {
-            sum += scanBufferPointer[i];
-        }
         float rollingAverage = (sum / (float)bufferSize);
         Serial.print("Rolling average: ");
         Serial.println(rollingAverage);
