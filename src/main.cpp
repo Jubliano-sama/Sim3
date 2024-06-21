@@ -378,44 +378,85 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     return objectAngle;
 }
 
+float* scanWholeField(float startingAngle)
+{
+    static float averages[126]; // Array to store average values for each 2-degree segment
+    const int scanningSpeed = shoulderRotationSteps / secondsPerFullScan;
+
+    for (int i =0; i < 126; i++){
+        averages[i] = 99999999;
+    }
+    setStepperSpeed(scanningSpeed);
+
+    // first move to carryingposition then rotateshoulder then move to scanning position
+    if (!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(startingAngle))
+    {
+        currentState = STATE_SWITCHPIN_OFF;
+        return averages;
+    }
+
+
+    interpolateToArmConfiguration(scanningPosition, 1000);
+    delay(1000);
+    float previousShoulderAngle = startingAngle;
+    rotateShoulderRelativeAngle(360-2*startingAngle);
+    int index = 0;
+    while(!hasStepperReachedPosition()){
+        int sum = 0;
+        int amountOfValues = 0;
+        while((getShoulderAngle() - previousShoulderAngle < 2.91f) && !hasStepperReachedPosition()){
+            sum += objectSensor.readRange();
+            amountOfValues++;
+        }
+        previousShoulderAngle = getShoulderAngle();
+        float average = (float)sum/(float)amountOfValues;
+        averages[index] = average;
+        Serial.println(average);
+        index++;
+    }
+    
+    setStepperSpeed(stepperMaxSpeed);
+    return averages; // Return the array of averages
+}
+
 // Returns a pointer to an array containing the objects angles in chronological order
 float *scanForObject()
 {
     static float objectAngles[2] = {-1, -1};
 
     Serial.println("Starting scan");
-
-    int ambientValue = measureAmbientValue();
-    // if switch pin is off
-    if (ambientValue < 0.0f)
-        return objectAngles;
-
-    // Find first object
-    float objectPlace = scanRange(25.0f, 360.0f, ambientValue);
-
-    if (objectPlace > 0.0f)
-    {
-        objectAngles[0] = objectPlace - SCANNING_OFFSET_ANGLE;
+    float* scanValues = scanWholeField(25.0f);
+    Serial.println("Scan Completed");
+    float lowestValue = 999999;
+    int lowestValueIndex = -1;
+    for(int i = 0; i < 123; i++){
+        if(scanValues[i] < lowestValue){
+            lowestValue = scanValues[i];
+            lowestValueIndex = i;
+        }
     }
-    else
-    {
-        Serial.println("No object found, returning");
-        return objectAngles;
-    }
-    // Find second object
+    Serial.print("Index: ");
+    Serial.println(lowestValueIndex);
 
-    objectPlace = scanRange(objectPlace + SCANNING_OBJECT_ANGLE_TOLERANCE, 360.0f, ambientValue);
-
-    if (objectPlace > 0.0f)
-    {
-        objectAngles[1] = objectPlace - SCANNING_OFFSET_ANGLE;
+    objectAngles[0] = (float)(lowestValueIndex)*3.35f + 25.0f + SCANNING_OFFSET_ANGLE;
+    for (int i = constrain(lowestValueIndex - 4, 0, 180); i < constrain(lowestValueIndex + 4, 0, 180); i++ ){
+        scanValues[i] = 999999;
     }
-    else
-    {
-        Serial.println("No object found, returning");
-        return objectAngles;
-    }
+    lowestValue = 99999999;
+    lowestValueIndex = -1;
 
+    for(int i = 0; i < 123; i++){
+        if(scanValues[i] < lowestValue){
+            lowestValue = scanValues[i];
+            lowestValueIndex = i;
+        }
+    }
+    Serial.print("Index: ");
+    Serial.println(lowestValueIndex);
+    objectAngles[1] = (float)(lowestValueIndex)*3.35f + 25.0f + SCANNING_OFFSET_ANGLE;
+    
+    Serial.println(objectAngles[0]);
+    Serial.println(objectAngles[1]);
     return objectAngles;
 }
 

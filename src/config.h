@@ -17,17 +17,17 @@
 #define SWITCHPIN 53
 
 // TODO Change for actual angles
-const ArmConfiguration scanningPosition(56, 178, 112, 33);
+const ArmConfiguration scanningPosition(56, 178, 117, 33);
 const ArmConfiguration carryingPosition(90, 173, 140);
 const ArmConfiguration placingPosition(1, 123, 173);
-const ArmConfiguration grabbingPosition(0.1, 128, 180);
+const ArmConfiguration grabbingPosition(2, 128, 180);
 const ArmConfiguration pushingObjectPosition(46, 177, 90, 110);
 const ArmConfiguration pushingObjectPosition2(46, 150, 90, 110);
 const ArmConfiguration homePosition(35, 140, 156);
 
 const float driveSpeedMultiplier = 0.7;
 
-const int secondsPerFullScan = 30;
+const int secondsPerFullScan = 40;
 const float Kp = 0.11;
 const float Ki = 0.000013;
 const float Kd = 0;

@@ -102,10 +102,11 @@ float positionToAngle(int position)
 	{ // Ensure the angle is positive
 		angle += 360.0f;
 	}
+	/*
 	Serial.print("Converted position ");
 	Serial.print(position);
 	Serial.print(" to angle: ");
-	Serial.println(angle);
+	Serial.println(angle);*/
 	return angle;
 }
 
