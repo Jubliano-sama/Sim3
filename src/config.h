@@ -20,7 +20,7 @@
 const ArmConfiguration scanningPosition(56, 178, 112, 33);
 const ArmConfiguration carryingPosition(90, 173, 140);
 const ArmConfiguration placingPosition(1, 123, 173);
-const ArmConfiguration grabbingPosition(0.1, 128, 180);
+const ArmConfiguration grabbingPosition(0.1, 143, 180);
 const ArmConfiguration pushingObjectPosition(46, 177, 90, 110);
 const ArmConfiguration pushingObjectPosition2(46, 150, 90, 110);
 const ArmConfiguration homePosition(35, 140, 156);
