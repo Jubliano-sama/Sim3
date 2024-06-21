@@ -380,12 +380,13 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
 
 float** scanWholeField(float startingAngle)
 {
-    static float averages[183]; // Array to store average values for each 2-degree segment
-    static float whereAverageWasMeasured[183];
+    const int pointsToMeasure = 155;
+    static float averages[pointsToMeasure]; // Array to store average values for each 2-degree segment
+    static float whereAverageWasMeasured[pointsToMeasure];
     static float* output[2] = {averages, whereAverageWasMeasured};
     const int scanningSpeed = shoulderRotationSteps / secondsPerFullScan;
 
-    for (int i =0; i < 183; i++){
+    for (int i =0; i < pointsToMeasure; i++){
         averages[i] = 99999999;
     }
     setStepperSpeed(scanningSpeed);
@@ -406,7 +407,7 @@ float** scanWholeField(float startingAngle)
     while(!hasStepperReachedPosition()){
         int sum = 0;
         int amountOfValues = 0;
-        while((getShoulderAngle() - previousShoulderAngle < 2.0f) && !hasStepperReachedPosition()){
+        while((getShoulderAngle() - previousShoulderAngle < (360-2*startingAngle)/pointsToMeasure) && !hasStepperReachedPosition()){
             sum += objectSensor.readRange();
             amountOfValues++;
         }
@@ -434,9 +435,10 @@ float *scanForObject()
     Serial.println("Scan Completed");
     float lowestValue = 999999;
     int lowestValueIndex = -1;
-    for(int i = 0; i < 180; i++){
-        if(scanValues[i] < lowestValue){
-            lowestValue = scanValues[i];
+    for(int i = 1; i < 179; i++){
+        float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
+        if(generalArea < lowestValue){
+            lowestValue = generalArea;
             lowestValueIndex = i;
         }
     }
@@ -444,15 +446,16 @@ float *scanForObject()
     Serial.println(lowestValueIndex);
 
     objectAngles[0] = whereValueWasMeasured[lowestValueIndex] + SCANNING_OFFSET_ANGLE;
-    for (int i = constrain(lowestValueIndex - 4, 0, 180); i < constrain(lowestValueIndex + 4, 0, 180); i++ ){
+    for (int i = constrain(lowestValueIndex -4, 0, 180); i < constrain(lowestValueIndex + 4, 0, 180); i++ ){
         scanValues[i] = 999999;
     }
     lowestValue = 99999999;
     lowestValueIndex = -1;
 
-    for(int i = 0; i < 180; i++){
-        if(scanValues[i] < lowestValue){
-            lowestValue = scanValues[i];
+    for(int i = 1; i < 179; i++){
+        float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
+        if(generalArea < lowestValue){
+            lowestValue = generalArea;
             lowestValueIndex = i;
         }
     }
