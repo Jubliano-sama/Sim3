@@ -17,7 +17,7 @@
 #define SWITCHPIN 53
 
 // TODO Change for actual angles
-const ArmConfiguration scanningPosition(56, 178, 117, 33);
+const ArmConfiguration scanningPosition(56, 178, 120, 33);
 const ArmConfiguration carryingPosition(90, 173, 140);
 const ArmConfiguration placingPosition(1, 123, 173);
 const ArmConfiguration grabbingPosition(2, 128, 180);
