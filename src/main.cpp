@@ -384,7 +384,7 @@ void scanWholeField(float startingAngle, ArmConfiguration scanningPos, float* av
 
     for (int i =0; i < arraySize; i++){
         averagesArray[i] = 99999999;
-        whereAverageWasMeasuredArray[i] = 180;
+        whereAverageWasMeasuredArray[i] = 180 - startingAngle;
     }
     setStepperSpeed(scanningSpeed);
 
@@ -395,16 +395,15 @@ void scanWholeField(float startingAngle, ArmConfiguration scanningPos, float* av
         return;
     }
 
-
     interpolateToArmConfiguration(scanningPos, 1000);
-    delay(1000);
+    delay(500);
     float previousShoulderAngle = startingAngle;
     rotateShoulderRelativeAngle(360-2*startingAngle);
     int index = 0;
     while(!hasStepperReachedPosition()){
         unsigned long sum = 0;
         unsigned int amountOfValues = 0;
-        while((getShoulderAngle() - previousShoulderAngle < 2.5f) && !hasStepperReachedPosition()){
+        while((getShoulderAngle() - previousShoulderAngle < (360-2*startingAngle)/SCANNING_POSITIONS_ARRAY_SIZE) && !hasStepperReachedPosition()){
             sum += objectSensor.readRange();
             amountOfValues++;
         }
@@ -428,15 +427,15 @@ float *scanForObject()
     static float objectAngles[2] = {-1, -1};
 
     Serial.println("Starting scan");
-    float scanValues[155];
-    float whereValueWasMeasured[155];
-    scanWholeField(32.0f, scanningPosition, scanValues, whereValueWasMeasured, 155);
+    float scanValues[SCANNING_POSITIONS_ARRAY_SIZE];
+    float whereValueWasMeasured[SCANNING_POSITIONS_ARRAY_SIZE];
+    scanWholeField(SCANNING_BEGIN_END_ANGLE, scanningPosition, scanValues, whereValueWasMeasured, SCANNING_POSITIONS_ARRAY_SIZE);
 
-    rotateShoulderRelativeAngle(-shoulderRotationSteps);
+    rotateShoulderRelativeAngle(-shoulderRotationSteps + SCANNING_BEGIN_END_ANGLE);
     safeWaitUntilStepperStopped();
 
-    float scanValues2[155];
-    scanWholeField(32.0f, scanningPosition2, scanValues2, whereValueWasMeasured, 155);
+    float scanValues2[SCANNING_POSITIONS_ARRAY_SIZE];
+    scanWholeField(SCANNING_BEGIN_END_ANGLE, scanningPosition2, scanValues2, whereValueWasMeasured, SCANNING_POSITIONS_ARRAY_SIZE);
 
     Serial.println("Scan Completed");
     float lowestValue = 999999;
