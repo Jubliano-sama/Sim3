@@ -260,42 +260,6 @@ bool rotateShoulderSafely(float angle)
     return safeWaitUntilStepperStopped();
 }
 
-float measureAmbientValue()
-{
-    float sum = 0;
-    int count = 0;
-
-    if(!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(0) || !moveToPositionSafely(scanningPosition, 1000)){
-        currentState = STATE_SWITCHPIN_OFF;
-        return -1;
-    }
-
-    int i = 0;
-    while (i < 500)
-    {
-        sum += (float)objectSensor.readRange();
-        count++;
-        delay(1);
-        i++;
-    }
-    Serial.print("Ambient value measured at: ");
-    float average = sum / (float)count;
-    Serial.println(average);
-    return average;
-}
-
-float *updateAndGetRollingScanBuffer(float *lastBuffer, int lastBufferSize, float newValue)
-{
-    float previousLastScan = lastBuffer[lastBufferSize-1];
-    // Shift elements
-    for (int i = 1; i < lastBufferSize; i++)
-    {
-        lastBuffer[i] = lastBuffer[i - 1];
-    }
-    lastBuffer[0] = (newValue+previousLastScan)/2.0f;
-    return lastBuffer;
-}
-
 // Scans a range of angles for objects
 float scanRange(float beginAngle, float endAngle, int ambientValue)
 {
