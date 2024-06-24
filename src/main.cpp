@@ -378,17 +378,13 @@ float scanRange(float beginAngle, float endAngle, int ambientValue)
     return objectAngle;
 }
 
-float** scanWholeField(float startingAngle)
+void scanWholeField(float startingAngle, ArmConfiguration scanningPos, float* averagesArray, float* whereAverageWasMeasuredArray, int arraySize)
 {
-    const int pointsToMeasure = 155;
-    static float averages[pointsToMeasure]; // Array to store average values for each 2-degree segment
-    static float whereAverageWasMeasured[pointsToMeasure];
-    static float* output[2] = {averages, whereAverageWasMeasured};
     const int scanningSpeed = shoulderRotationSteps / secondsPerFullScan;
 
-    for (int i =0; i < pointsToMeasure; i++){
-        averages[i] = 99999999;
-        whereAverageWasMeasured[i] = 180;
+    for (int i =0; i < arraySize; i++){
+        averagesArray[i] = 99999999;
+        whereAverageWasMeasuredArray[i] = 180;
     }
     setStepperSpeed(scanningSpeed);
 
@@ -396,11 +392,11 @@ float** scanWholeField(float startingAngle)
     if (!moveToPositionSafely(carryingPosition, 1000) || !rotateShoulderSafely(startingAngle))
     {
         currentState = STATE_SWITCHPIN_OFF;
-        return output;
+        return;
     }
 
 
-    interpolateToArmConfiguration(scanningPosition, 1000);
+    interpolateToArmConfiguration(scanningPos, 1000);
     delay(1000);
     float previousShoulderAngle = startingAngle;
     rotateShoulderRelativeAngle(360-2*startingAngle);
@@ -413,17 +409,17 @@ float** scanWholeField(float startingAngle)
             amountOfValues++;
         }
         previousShoulderAngle = getShoulderAngle();
-        whereAverageWasMeasured[index] = previousShoulderAngle;
+        whereAverageWasMeasuredArray[index] = previousShoulderAngle;
         float average = (float)sum/(float)amountOfValues;
-        averages[index] = average;
+        averagesArray[index] = average;
         Serial.print("Average: ");
         Serial.println(average);
-        Serial.println(whereAverageWasMeasured[index]);
+        Serial.println(whereAverageWasMeasuredArray[index]);
         index++;
     }
     
     setStepperSpeed(stepperMaxSpeed);
-    return output; // Return the array of averages
+    return; // Return the array of averages
 }
 
 // Returns a pointer to an array containing the objects angles in chronological order
@@ -432,14 +428,21 @@ float *scanForObject()
     static float objectAngles[2] = {-1, -1};
 
     Serial.println("Starting scan");
-    float** outputValues = scanWholeField(25.0f);
-    float* scanValues = outputValues[0];
-    float* whereValueWasMeasured = outputValues[1];
+    float scanValues[155];
+    float whereValueWasMeasured[155];
+    scanWholeField(32.0f, scanningPosition, scanValues, whereValueWasMeasured, 155);
+
+    rotateShoulderRelativeAngle(-shoulderRotationSteps);
+    safeWaitUntilStepperStopped();
+
+    float scanValues2[155];
+    scanWholeField(32.0f, scanningPosition2, scanValues2, whereValueWasMeasured, 155);
+
     Serial.println("Scan Completed");
     float lowestValue = 999999;
     int lowestValueIndex = -1;
-    for(int i = 1; i < 155; i++){
-        float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
+    for(int i = 1; i < 154; i++){
+        float generalArea = pow(scanValues[i-1] + scanValues[i] + scanValues[i+1], 0.91) + scanValues2[i-1] + scanValues2[i] + scanValues2[i+1];
         if(generalArea < lowestValue){
             lowestValue = generalArea;
             lowestValueIndex = i;
@@ -456,8 +459,8 @@ float *scanForObject()
     lowestValue = 99999999;
     lowestValueIndex = -1;
 
-    for(int i = 1; i < 155; i++){
-        float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
+    for(int i = 1; i < 154; i++){
+        float generalArea = pow(scanValues[i-1] + scanValues[i] + scanValues[i+1], 0.91) + scanValues2[i-1] + scanValues2[i] + scanValues2[i+1];
         if(generalArea < lowestValue){
             lowestValue = generalArea;
             lowestValueIndex = i;
@@ -565,6 +568,7 @@ void fieldObjectRoutine()
         Serial.println("One or less objects found, returning");
         return;
     }
+    interpolateToArmConfiguration(carryingPosition, 500);
     // Displace first object by 180 degrees
     moveObject(objectAngles[0], objectAngles[0] + 180,true);
     moveToHome();
@@ -683,7 +687,7 @@ void setup()
     car::setupCarHardware();
     setupMotors();
     moveToArmConfiguration(homePosition);
-    //Serial.begin(115200); // Start Serial at 115200bps
+    Serial.begin(115200); // Start Serial at 115200bps
     Wire.begin();         // Start I2C library
     delay(100);           // delay .1s
 
@@ -700,5 +704,6 @@ void setup()
 
 void loop()
 {
-    updateStateMachine();
+    moveObject(90, 270, true);
+    moveObject(270, 90, true);
 }
