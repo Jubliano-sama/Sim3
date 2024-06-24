@@ -7,7 +7,7 @@
 #define STOP_DRIVE_FORWARD_MS 2000
 
 // The scanning function output will be offset by this amount, with respect to the scanning direction
-#define SCANNING_OFFSET_ANGLE 0
+#define SCANNING_OFFSET_ANGLE -3
 #define SCANNING_OBJECT_ANGLE_TOLERANCE 18 // This value will be used to make sure we dont hit a object that has already been scanned
 #define SCANNING_THRESHOLD_MM 5.5
 #define SCANNING_ROLLING_AVERAGE_ANGLE 3 // the angle over which the rolling average is taken
@@ -27,7 +27,7 @@ const ArmConfiguration homePosition(35, 140, 156);
 
 const float driveSpeedMultiplier = 0.7;
 
-const int secondsPerFullScan = 40;
+const int secondsPerFullScan = 20;
 const float Kp = 0.11;
 const float Ki = 0.000013;
 const float Kd = 0;

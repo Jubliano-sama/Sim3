@@ -388,6 +388,7 @@ float** scanWholeField(float startingAngle)
 
     for (int i =0; i < pointsToMeasure; i++){
         averages[i] = 99999999;
+        whereAverageWasMeasured[i] = 180;
     }
     setStepperSpeed(scanningSpeed);
 
@@ -405,17 +406,19 @@ float** scanWholeField(float startingAngle)
     rotateShoulderRelativeAngle(360-2*startingAngle);
     int index = 0;
     while(!hasStepperReachedPosition()){
-        int sum = 0;
-        int amountOfValues = 0;
-        while((getShoulderAngle() - previousShoulderAngle < (360-2*startingAngle)/pointsToMeasure) && !hasStepperReachedPosition()){
+        unsigned long sum = 0;
+        unsigned int amountOfValues = 0;
+        while((getShoulderAngle() - previousShoulderAngle < 2.5f) && !hasStepperReachedPosition()){
             sum += objectSensor.readRange();
             amountOfValues++;
         }
         previousShoulderAngle = getShoulderAngle();
-        whereAverageWasMeasured[index] = getShoulderAngle();
+        whereAverageWasMeasured[index] = previousShoulderAngle;
         float average = (float)sum/(float)amountOfValues;
         averages[index] = average;
+        Serial.print("Average: ");
         Serial.println(average);
+        Serial.println(whereAverageWasMeasured[index]);
         index++;
     }
     
@@ -435,7 +438,7 @@ float *scanForObject()
     Serial.println("Scan Completed");
     float lowestValue = 999999;
     int lowestValueIndex = -1;
-    for(int i = 1; i < 179; i++){
+    for(int i = 1; i < 155; i++){
         float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
         if(generalArea < lowestValue){
             lowestValue = generalArea;
@@ -444,7 +447,8 @@ float *scanForObject()
     }
     Serial.print("Index: ");
     Serial.println(lowestValueIndex);
-
+    Serial.print("Angle: ");
+    Serial.println(whereValueWasMeasured[lowestValueIndex]);
     objectAngles[0] = whereValueWasMeasured[lowestValueIndex] + SCANNING_OFFSET_ANGLE;
     for (int i = constrain(lowestValueIndex -4, 0, 180); i < constrain(lowestValueIndex + 4, 0, 180); i++ ){
         scanValues[i] = 999999;
@@ -452,7 +456,7 @@ float *scanForObject()
     lowestValue = 99999999;
     lowestValueIndex = -1;
 
-    for(int i = 1; i < 179; i++){
+    for(int i = 1; i < 155; i++){
         float generalArea = scanValues[i-1] + scanValues[i] + scanValues[i+1];
         if(generalArea < lowestValue){
             lowestValue = generalArea;
@@ -461,6 +465,8 @@ float *scanForObject()
     }
     Serial.print("Index: ");
     Serial.println(lowestValueIndex);
+    Serial.print("Angle: ");
+    Serial.println(whereValueWasMeasured[lowestValueIndex]);
     objectAngles[1] = whereValueWasMeasured[lowestValueIndex] + SCANNING_OFFSET_ANGLE;
     
     Serial.println(objectAngles[0]);
@@ -495,7 +501,7 @@ void moveObject(float objectAngle, float destinationAngle, bool openGripperAtEnd
     if(!rotateShoulderSafely(destinationAngle)){
         return;
     }
-    interpolateToArmConfiguration(placingPosition, 1000);
+    if(openGripperAtEnd) interpolateToArmConfiguration(placingPosition, 1000);
     delay(1000);
     if(openGripperAtEnd) openGrippers();
     if (!safeWait(1000))
@@ -677,7 +683,7 @@ void setup()
     car::setupCarHardware();
     setupMotors();
     moveToArmConfiguration(homePosition);
-    Serial.begin(115200); // Start Serial at 115200bps
+    //Serial.begin(115200); // Start Serial at 115200bps
     Wire.begin();         // Start I2C library
     delay(100);           // delay .1s
 

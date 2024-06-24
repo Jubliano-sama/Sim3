@@ -51,6 +51,7 @@ void moveStepper(int steps)
 		return;
 	} else if(((stepper->getCurrentPosition() + steps) < -maxRotationsOneDirection * shoulderRotationSteps)) {
 		stepper->move(steps+shoulderRotationSteps);
+		return;
 	}
 	stepper->move(steps);
 }
